@@ -40,7 +40,7 @@ export default function Home() {
 
 function Header() {
   return (
-    <header className="flex flex-col items-center mb-20 md:mb-20">
+    <header className="flex flex-col items-center mb-10">
       <Image
         src={logo}
         alt=""
@@ -51,7 +51,7 @@ function Header() {
       />
 
       <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-6 text-zinc-100">
-        Rofl
+        Rofl House
       </h1>
 
       <p className="text-zinc-300 text-base">
