@@ -54,15 +54,18 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       },
       other: {
         "fc:frame": JSON.stringify({
-          version: "1.0.0",
+          version: "next",
           imageUrl: `${baseUrl}/api/og/${address}`,
           button: {
             title: "View Raffle",
             action: {
-              type: "launch_mini_app",
+              type: "launch_frame", 
               url: `${baseUrl}/raffle/${address}`,
-            },
-          },
+              name: "Raffle",
+              splashImageUrl: `${baseUrl}/logo.png`,
+              splashBackgroundColor: "#111827"
+            }
+          }
         }),
       },
     };

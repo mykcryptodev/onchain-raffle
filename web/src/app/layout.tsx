@@ -36,12 +36,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <FarcasterProvider>
-          <ThirdwebProvider>
+        <ThirdwebProvider>
+          <FarcasterProvider>
             {children}
             <ToastProvider />
-          </ThirdwebProvider>
-        </FarcasterProvider>
+          </FarcasterProvider>
+        </ThirdwebProvider>
       </body>
     </html>
   );
