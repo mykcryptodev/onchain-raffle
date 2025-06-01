@@ -17,6 +17,7 @@ import * as raffleAbi from "@/abis/raffle";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { WatchRaffle } from "@/components/WatchRaffle";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { shortenAddress } from "thirdweb/utils";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -194,7 +195,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                   className="font-medium truncate block" 
                 />
                 <p className="text-xs text-zinc-500">
-                  {isOwner ? "You are the owner" : "Not the owner"}
+                  {isOwner ? "You are the owner" : shortenAddress(raffleData.owner)}
                 </p>
               </div>
             </div>

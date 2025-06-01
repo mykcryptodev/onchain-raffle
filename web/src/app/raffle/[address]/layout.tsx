@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
             action: {
               type: "launch_frame", 
               url: `${baseUrl}/raffle/${address}`,
-              name: "Raffle",
+              name: "Rofl House",
               splashImageUrl: `${baseUrl}/logo.png`,
               splashBackgroundColor: "#111827"
             }
@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   } catch (error) {
     console.error("Error generating metadata:", error);
     return {
-      title: "Raffle",
+      title: "Rofl House",
       description: "View this onchain raffle",
     };
   }
