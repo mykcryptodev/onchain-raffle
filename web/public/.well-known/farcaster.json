@@ -1,21 +1,24 @@
 {
-  "domain": "onchain-raffle-sigma.com",
+  "domain": "rofl.house",
   "account": {
     "header": "eyJmaWQiOjIxNzI0OCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGViYTc4NzE3YjZmMDU5Q0ZFMGI3NUU3NUMyZWQ0QkI3Y0E2NTE1NEYifQ",
     "payload": "eyJkb21haW4iOiJyb2ZsLmhvdXNlIn0",
     "signature": "MHhlZWYyYzcxM2M1NzAwYzg4MDYyOGU5NThjZjY4MDFjNDUzMzdkNzZjYzM3NmU3YzRmYTc4MTBiODdiNDI3N2VhNGE2ZDkxYzA4MDczM2NhMzNmZDMyNTQ4ODMzOWU3M2JjY2U3NjAzMmEwZjhmZGIxMWFhMjY4ZmM1OGE1ZmQzMDFi"
   },
-  "profile": {
-    "name": "Rofl",
-    "tagline": "Create fair onchain raffles with any token",
-    "bio": "An onchain raffle platform built with verifiable randomness. Create transparent raffles with any ERC20 token as the prize.",
+  "frame": {
+    "name": "Rofl House",
+    "subtitle": "Create fair onchain raffles",
+    "tagline": "Create fair onchain raffles",
+    "description": "An onchain raffle platform built with verifiable randomness. Create transparent raffles with any ERC20 token as the prize.",
     "primaryColor": "#3B82F6",
     "coverUrl": "https://rofl.house/cover.png",
-    "logoUrl": "https://rofl.house/logo.png"
-  },
-  "links": {
-    "ios": "https://rofl.house",
-    "android": "https://rofl.house", 
-    "web": "https://rofl.house"
+    "logoUrl": "https://rofl.house/logo.png",
+    "splashImageUrl": "https://rofl.house/logo.png",
+    "splashBackgroundColor": "#3B82F6",
+    "ogImageUrl": "https://rofl.house/cover.png",
+    "heroImageUrl": "https://rofl.house/cover.png",
+    "iconUrl": "https://rofl.house/logo.png",
+    "primaryCategory": "games",
+    "tags": ["games", "defi", "raffle", "jackpot", "lottery"]
   }
 } 
