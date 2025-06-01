@@ -6,6 +6,8 @@ import { ContractOptions, getGasPrice, prepareContractCall } from "thirdweb";
 import { chain } from "@/constants/chain";
 import { client } from "@/constants/thirdweb";
 
+const BUFFER_PERCENTAGE = 20n; // 20% buffer
+
 type SelectRandomWinnerProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
   balance: string;
@@ -35,11 +37,15 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       contract: raffleContract,
       gasPriceWei: currentGasPrice,
     });
+    
+    // Add 10% buffer to the estimated ETH required
+    const ethWithBuffer = estimatedEthRequired + (estimatedEthRequired * BUFFER_PERCENTAGE / 100n);
+    
     return prepareContractCall({
       contract: raffleContract,
       method: "function requestRandomWinner(address[] eligibleAddresses) external",
       params: [addresses],
-      value: estimatedEthRequired
+      value: ethWithBuffer
     });
   }, [raffleContract, addresses]);
 

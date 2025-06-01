@@ -4,6 +4,7 @@ import { chain } from "@/constants/chain";
 import * as raffleAbi from "@/abis/raffle";
 import RaffleManagement from "./RaffleManagement";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
+import { RaffleData } from "@/types/raffle";
 
 interface PageProps {
   params: Promise<{
@@ -45,7 +46,7 @@ export default async function RafflePage({ params }: PageProps) {
       }),
     ]);
 
-    const raffleData = {
+    const raffleData: RaffleData = {
       owner: owner as `0x${string}`,
       token: token as `0x${string}`,
       tokenDecimals,

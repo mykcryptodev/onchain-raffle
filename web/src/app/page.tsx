@@ -6,6 +6,7 @@ import { RaffleList } from "@/components/RaffleList";
 import { Suspense } from "react";
 import { RaffleListLoading } from "@/components/RaffleListLoading";
 import { chain } from "@/constants/chain";
+import { RaffleHeader } from "@/components/RaffleHeader";
 
 export default function Home() {
   return (
@@ -25,6 +26,8 @@ export default function Home() {
         </div>
 
         <div className="mt-20">
+          <RaffleHeader />
+          
           <Suspense fallback={<RaffleListLoading />}>
             <RaffleList />
           </Suspense>

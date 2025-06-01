@@ -12,9 +12,10 @@ type FundRaffleProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
   tokenAddress: `0x${string}`;
   tokenDecimals: number;
+  onFunded: () => void;
 }
 
-export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, tokenDecimals }) => {
+export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, tokenDecimals, onFunded }) => {
   const [fundAmount, setFundAmount] = useState("");
   const account = useActiveAccount();
 
@@ -96,6 +97,7 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
             }}
             onTransactionConfirmed={() => {
               console.log("transaction confirmed");
+              onFunded();
             }}
           >
             Fund Prize

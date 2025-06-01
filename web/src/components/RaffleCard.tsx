@@ -6,16 +6,14 @@ import Link from "next/link";
 import AccountAvatarFallback from "./fallbacks/AccountAvatar";
 import AccountNameFallback from "./fallbacks/AccountName";
 import { TokenIconFallback } from "./fallbacks/TokenIcon";
+import { RaffleCardData } from "@/types/raffle";
+import { shortenAddress } from "thirdweb/utils";
 
-interface RaffleCardProps {
+type RaffleCardProps = Omit<RaffleCardData, 'raffleAddress'> & {
   raffleAddress: string;
-  raffleOwner: string;
-  raffleToken: string;
-  raffleWinner: string;
-  index: number;
-}
+};
 
-export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinner, index }: RaffleCardProps) {
+export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinner, prizeDistributed }: RaffleCardProps) {
   const hasWinner = raffleWinner !== ZERO_ADDRESS;
   
   return (
@@ -23,13 +21,15 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-lg font-semibold">Raffle #{index + 1}</h3>
-          <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleAddress}`} className="text-xs text-zinc-500 font-mono" target="_blank">
-            {raffleAddress.slice(0, 6)}...{raffleAddress.slice(-4)}
+          <Link 
+            className="text-lg font-semibold"
+            href={`${chain.blockExplorers?.[0]?.url}/address/${raffleAddress}`} 
+            target="_blank">
+            Raffle {shortenAddress(raffleAddress)}
           </Link>
         </div>
         <Link href={`/raffle/${raffleAddress}`} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg font-medium text-sm">
-          {hasWinner ? "View Results" : "Enter Raffle"}
+          View Raffle
         </Link>
       </div>
 
@@ -43,6 +43,7 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
               <TokenIcon 
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
+                iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleToken}`}
                 className="w-10 h-10"
               />
               <div className="flex flex-col">
@@ -84,7 +85,9 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
 
         {/* Winner Section */}
         <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleWinner}`} className="space-y-2">
-          <p className="text-sm text-zinc-400 uppercase tracking-wide">Winner</p>
+          <p className="text-sm text-zinc-400 uppercase tracking-wide">
+            Winner {prizeDistributed && hasWinner && <span className="text-green-500">✓</span>}
+          </p>
           {!hasWinner ? (
             <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
               <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
@@ -98,11 +101,19 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
           ) : (
             <AccountProvider address={raffleWinner} client={client}>
               <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
-                <AccountAvatar className="w-10 h-10 rounded-lg" />
+                <AccountAvatar 
+                  loadingComponent={<AccountAvatarFallback />}
+                  fallbackComponent={<AccountAvatarFallback />}
+                  className="w-10 h-10 rounded-lg"
+                />
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🎉</span>
-                    <AccountName className="font-medium text-base" />
+                    <AccountName 
+                      loadingComponent={<AccountNameFallback address={raffleWinner} />}
+                      fallbackComponent={<AccountNameFallback address={raffleWinner} />}
+                      className="font-medium text-base"
+                    />
                   </div>
                   <span className="text-xs text-zinc-500 font-mono">
                     {raffleWinner.slice(0, 6)}...{raffleWinner.slice(-4)}

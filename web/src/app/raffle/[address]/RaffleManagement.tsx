@@ -1,26 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton, useActiveWalletChain, useSwitchActiveWalletChain } from "thirdweb/react";
-import { getContract, sendTransaction, toTokens, ZERO_ADDRESS } from "thirdweb";
+import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton } from "thirdweb/react";
+import { getContract, toTokens, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
-import * as raffleAbi from "@/abis/raffle";
 import Link from "next/link";
 import { TokenIconFallback } from "@/components/fallbacks/TokenIcon";
 import { AccountAvatarFallback } from "@/components/fallbacks/AccountAvatar";
 import { AccountNameFallback } from "@/components/fallbacks/AccountName";
 import { FundRaffle } from "@/components/manage/FundRaffle";
 import { SelectRandomWinner } from "@/components/manage/SelectRandomWinner";
-
-interface RaffleData {
-  owner: `0x${string}`;
-  token: `0x${string}`;
-  tokenDecimals: number;
-  winner: `0x${string}`;
-  prizeDistributed: boolean;
-  balance: string;
-}
+import { DistributePrize } from "@/components/manage/DistributePrize";
+import { RaffleData } from "@/types/raffle";
+import { useRouter } from "next/navigation";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -29,11 +22,9 @@ interface RaffleManagementProps {
 
 export default function RaffleManagement({ address, initialRaffleData }: RaffleManagementProps) {
   const account = useActiveAccount();
-  const activeChain = useActiveWalletChain();
-  const switchChain = useSwitchActiveWalletChain();
+  const router = useRouter();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const raffleContract = getContract({
     client,
@@ -44,37 +35,6 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const isOwner = account?.address === raffleData.owner;
   const hasWinner = raffleData.winner !== ZERO_ADDRESS;
   const balanceAsBigInt = BigInt(raffleData.balance);
-  console.log({ raffleData })
-
-  const switchChainIfNecessary = async () => {
-    if (activeChain?.id !== chain.id) {
-      await switchChain(chain);
-    }
-  };
-
-  const handleDistributePrize = async () => {
-    if (!account) return;
-    await switchChainIfNecessary();
-    
-    setIsProcessing(true);
-    try {
-      const distributeTx = raffleAbi.distributePrize({
-        contract: raffleContract,
-      });
-      
-      await sendTransaction({
-        transaction: distributeTx,
-        account,
-      });
-      
-      // Update prize distributed status
-      setRaffleData({ ...raffleData, prizeDistributed: true });
-    } catch (error) {
-      console.error("Error distributing prize:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -102,6 +62,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
               <TokenIcon 
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
+                iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleData.token}`}
                 className="w-10 h-10" 
               />
               <div>
@@ -180,7 +141,37 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
 
           {/* Fund Prize */}
           {!hasWinner && (
-            <FundRaffle raffleContract={raffleContract} tokenAddress={raffleData.token} tokenDecimals={raffleData.tokenDecimals} />
+            <FundRaffle 
+              raffleContract={raffleContract} 
+              tokenAddress={raffleData.token} 
+              tokenDecimals={raffleData.tokenDecimals} 
+              onFunded={async () => {
+                // Refresh the server component data
+                router.refresh();
+                
+                // Also update local state with new balance
+                try {
+                  const tokenContract = getContract({
+                    client,
+                    chain,
+                    address: raffleData.token,
+                  });
+                  
+                  const { balanceOf } = await import("thirdweb/extensions/erc20");
+                  const newBalance = await balanceOf({
+                    contract: tokenContract,
+                    address: address,
+                  });
+                  
+                  setRaffleData(prev => ({
+                    ...prev,
+                    balance: newBalance.toString()
+                  }));
+                } catch (error) {
+                  console.error("Error fetching new balance:", error);
+                }
+              }}
+            />
           )}
 
           {/* Select Winner */}
@@ -193,21 +184,14 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
           )}
 
           {/* Distribute Prize */}
-          {hasWinner && !raffleData.prizeDistributed && (
-            <div className="border border-zinc-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium mb-3">Distribute Prize</h3>
-              <p className="text-sm text-zinc-400 mb-3">
-                Send the prize pool to the winner
-              </p>
-              <button
-                onClick={handleDistributePrize}
-                disabled={isProcessing}
-                className="w-full px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-700 disabled:cursor-not-allowed transition-colors rounded-lg font-medium"
-              >
-                {isProcessing ? "Processing..." : "Distribute Prize to Winner"}
-              </button>
-            </div>
-          )}
+          <DistributePrize
+            raffleContract={raffleContract}
+            hasWinner={hasWinner}
+            prizeDistributed={raffleData.prizeDistributed}
+            onSuccess={() => {
+              setRaffleData({ ...raffleData, prizeDistributed: true });
+            }}
+          />
 
           {/* Completed Raffle */}
           {hasWinner && raffleData.prizeDistributed && (
