@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
                 maxWidth: "600px",
               }}
             >
-              Create and participate in transparent on-chain raffles
+              Create provably fair onchain raffles
             </p>
             <div
               style={{

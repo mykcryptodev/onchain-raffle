@@ -245,7 +245,7 @@ export async function GET(request: NextRequest, { params }: Params) {
               color: "#9ca3af",
             }}
           >
-            View this raffle on-chain
+            View this raffle onchain
           </p>
         </div>
       ),

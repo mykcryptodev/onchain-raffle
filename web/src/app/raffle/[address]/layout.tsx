@@ -3,7 +3,8 @@ import { getContract } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import * as raffleAbi from "@/abis/raffle";
-import { balanceOf, decimals } from "thirdweb/extensions/erc20";
+import { getCurrencyMetadata } from "thirdweb/extensions/erc20";
+import { balanceOf } from "thirdweb/extensions/erc20";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,20 +34,21 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       address: token,
     });
 
-    const [tokenDecimals, balance] = await Promise.all([
-      decimals({ contract: tokenContract }),
-      balanceOf({ contract: tokenContract, address }),
-    ]);
+    const metadata = await getCurrencyMetadata({ contract: tokenContract });
 
-    const prizeAmount = (Number(balance) / Math.pow(10, tokenDecimals)).toFixed(2);
+    const { decimals, symbol } = metadata;
+
+    const balance = await balanceOf({ contract: tokenContract, address });
+
+    const prizeAmount = (Number(balance) / Math.pow(10, decimals)).toFixed(2);
     const baseUrl = process.env.NEXT_PUBLIC_URL || "https://YOUR_DOMAIN_HERE.com";
 
     return {
       title: `Raffle by ${owner.slice(0, 6)}...${owner.slice(-4)}`,
-      description: `Win ${prizeAmount} tokens in this on-chain raffle`,
+      description: `Win ${prizeAmount} ${symbol} in this onchain raffle`,
       openGraph: {
         title: `Raffle by ${owner.slice(0, 6)}...${owner.slice(-4)}`,
-        description: `Win ${prizeAmount} tokens in this on-chain raffle`,
+        description: `Win ${prizeAmount} ${symbol} in this onchain raffle`,
         images: [`${baseUrl}/api/og/${address}`],
         type: "website",
       },
@@ -68,7 +70,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
     console.error("Error generating metadata:", error);
     return {
       title: "Raffle",
-      description: "View this on-chain raffle",
+      description: "View this onchain raffle",
     };
   }
 }
