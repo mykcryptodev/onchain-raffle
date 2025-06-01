@@ -6,6 +6,7 @@
     "signature": "MHhlZWYyYzcxM2M1NzAwYzg4MDYyOGU5NThjZjY4MDFjNDUzMzdkNzZjYzM3NmU3YzRmYTc4MTBiODdiNDI3N2VhNGE2ZDkxYzA4MDczM2NhMzNmZDMyNTQ4ODMzOWU3M2JjY2U3NjAzMmEwZjhmZGIxMWFhMjY4ZmM1OGE1ZmQzMDFi"
   },
   "frame": {
+    "version": "1",
     "name": "Rofl House",
     "subtitle": "Create fair onchain raffles",
     "tagline": "Create fair onchain raffles",
@@ -13,6 +14,7 @@
     "primaryColor": "#3B82F6",
     "coverUrl": "https://rofl.house/cover.png",
     "logoUrl": "https://rofl.house/logo.png",
+    "homeUrl": "https://rofl.house",
     "splashImageUrl": "https://rofl.house/logo.png",
     "splashBackgroundColor": "#3B82F6",
     "ogImageUrl": "https://rofl.house/cover.png",
