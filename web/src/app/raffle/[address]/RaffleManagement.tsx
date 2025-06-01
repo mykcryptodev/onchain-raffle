@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton } from "thirdweb/react";
-import { getContract, toTokens, ZERO_ADDRESS } from "thirdweb";
+import { getContract, readContract, toTokens, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import Link from "next/link";
@@ -13,7 +13,8 @@ import { FundRaffle } from "@/components/manage/FundRaffle";
 import { SelectRandomWinner } from "@/components/manage/SelectRandomWinner";
 import { DistributePrize } from "@/components/manage/DistributePrize";
 import { RaffleData } from "@/types/raffle";
-import { useRouter } from "next/navigation";
+import * as raffleAbi from "@/abis/raffle";
+import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -22,9 +23,51 @@ interface RaffleManagementProps {
 
 export default function RaffleManagement({ address, initialRaffleData }: RaffleManagementProps) {
   const account = useActiveAccount();
-  const router = useRouter();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
+
+  useEffect(() => {
+    // on mount, fetch the raffle data on the client side to make sure it's up to date
+    const fetchRaffleData = async () => {
+      const raffleContract = getContract({
+        client,
+        chain,
+        address,
+      });
+
+      const [owner, token, winner, prizeDistributed] = await Promise.all([
+        raffleAbi.owner({ contract: raffleContract }),
+        raffleAbi.token({ contract: raffleContract }),
+        raffleAbi.winner({ contract: raffleContract }),
+        raffleAbi.prizeDistributed({ contract: raffleContract }),
+      ]);
+
+      const tokenContract = getContract({
+        client,
+        chain,
+        address: token,
+      });
+
+      const [tokenDecimals, balance] = await Promise.all([
+        decimals({
+          contract: tokenContract,
+        }),
+        balanceOf({
+        contract: tokenContract,
+        address: address,
+      })]);
+
+      setRaffleData({
+        owner: owner as `0x${string}`,
+        token: token as `0x${string}`,
+        winner: winner as `0x${string}`,
+        prizeDistributed: prizeDistributed as boolean,
+        tokenDecimals: Number(tokenDecimals),
+        balance: balance.toString(),
+      });
+    }
+    fetchRaffleData();
+  }, [address])
 
   const raffleContract = getContract({
     client,
@@ -145,11 +188,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
               raffleContract={raffleContract} 
               tokenAddress={raffleData.token} 
               tokenDecimals={raffleData.tokenDecimals} 
-              onFunded={async () => {
-                // Refresh the server component data
-                router.refresh();
-                
-                // Also update local state with new balance
+              onFunded={async () => {               
                 try {
                   const tokenContract = getContract({
                     client,

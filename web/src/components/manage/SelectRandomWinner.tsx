@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
-import { estimateRequestPrice } from "@/abis/raffle";
+import { estimateRequestPrice, estimateRequestPriceWithDefaultGas } from "@/abis/raffle";
 import { FC } from "react";
 import { TransactionButton } from "thirdweb/react";
 import { ContractOptions, getGasPrice, prepareContractCall } from "thirdweb";
 import { chain } from "@/constants/chain";
 import { client } from "@/constants/thirdweb";
+import { toast } from "react-toastify";
 
-const BUFFER_PERCENTAGE = 20n; // 20% buffer
+const BUFFER_PERCENTAGE = 10n; // 10% buffer
 
 type SelectRandomWinnerProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
@@ -33,12 +34,15 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       chain,
       client
     });
+    // convert from gwei to wei
+    const currentGasPriceWei = currentGasPrice * 10n ** 9n;
+    console.log("currentGasPrice", currentGasPriceWei);
     const estimatedEthRequired = await estimateRequestPrice({
       contract: raffleContract,
       gasPriceWei: currentGasPrice,
     });
     
-    // Add 10% buffer to the estimated ETH required
+    // Add buffer to the estimated ETH required
     const ethWithBuffer = estimatedEthRequired + (estimatedEthRequired * BUFFER_PERCENTAGE / 100n);
     
     return prepareContractCall({
@@ -71,12 +75,18 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
         <TransactionButton
           transaction={() => requestWinnerTx}
           disabled={addresses.length === 0}
+          onTransactionSent={() => {
+            toast.loading("Requesting winner...");
+          }}
           onTransactionConfirmed={() => {
-            alert("Random winner request submitted! The winner will be selected shortly.");
+            toast.dismiss();
+            toast.success("Random winner request submitted! The winner will be selected shortly.");
             setEligibleAddresses("");
           }}
           onError={(error) => {
             console.error("Error requesting winner:", error);
+            toast.dismiss();
+            toast.error("Failed to request winner. Please try again.");
           }}
         >
           Request Random Winner

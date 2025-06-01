@@ -23,9 +23,8 @@ export function RaffleHeader() {
       <CreateRaffleModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          // Refresh the page to show the new raffle
-          router.refresh();
+        onSuccess={(raffleAddress) => {
+          router.push(`/raffle/${raffleAddress}`);
         }}
       />
     </>

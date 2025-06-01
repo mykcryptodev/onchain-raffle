@@ -2,6 +2,7 @@ import { FC } from "react";
 import { TransactionButton } from "thirdweb/react";
 import { ContractOptions } from "thirdweb";
 import { distributePrize } from "@/abis/raffle";
+import { toast } from "react-toastify";
 
 type DistributePrizeProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
@@ -33,12 +34,19 @@ export const DistributePrize: FC<DistributePrizeProps> = ({
       <div className="flex justify-end">
         <TransactionButton
           transaction={() => distributeTx}
+          onTransactionSent={() => {
+            toast.loading("Distributing prize...");
+          }}
           onTransactionConfirmed={() => {
+            toast.dismiss();
             onSuccess?.();
             console.log("Prize distributed successfully!");
+            toast.success("Prize distributed successfully!");
           }}
           onError={(error) => {
+            toast.dismiss();
             console.error("Error distributing prize:", error);
+            toast.error("Failed to distribute prize. Please try again.");
           }}
         >
           Distribute Prize to Winner

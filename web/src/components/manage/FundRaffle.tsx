@@ -7,6 +7,7 @@ import { ContractOptions, getContract, toUnits } from "thirdweb";
 import { approve, decimals } from "thirdweb/extensions/erc20";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
+import { toast } from "react-toastify";
 
 type FundRaffleProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
@@ -77,8 +78,19 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
                 amount: fundAmount
               });
             }}
+            disabled={!fundAmount}
+            onTransactionSent={() => {
+              toast.loading("Approving...");
+            }}
             onTransactionConfirmed={async () => {
               await refetchAllowance();
+              toast.dismiss();
+              toast.success("Approved!");
+            }}
+            onError={(error) => {
+              toast.dismiss();
+              console.error("Approval error:", error);
+              toast.error("Failed to approve tokens. Please try again.");
             }}
           >
             Approve
@@ -91,12 +103,17 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
             }}
             onError={(error) => {
               console.error("error", error);
+              toast.dismiss();
+              toast.error("Failed to fund raffle. Please try again.");
             }}
             onTransactionSent={() => {
               console.log("transaction sent");
+              toast.loading("Funding...");
             }}
             onTransactionConfirmed={() => {
               console.log("transaction confirmed");
+              toast.dismiss();
+              toast.success("Raffle funded successfully!");
               onFunded();
             }}
           >

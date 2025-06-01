@@ -8,11 +8,12 @@ import { isAddress } from "thirdweb/utils";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { TokenIconFallback } from "./fallbacks/TokenIcon";
+import { toast } from "react-toastify";
 
 interface CreateRaffleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (raffleAddress: `0x${string}`) => void;
 }
 
 export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({ 
@@ -112,14 +113,22 @@ export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({
               <TransactionButton
                 transaction={() => createRaffleTx}
                 disabled={!isValidAddress}
+                onTransactionSent={() => {
+                  toast.loading("Creating raffle...");
+                }}
                 onTransactionConfirmed={async (receipt) => {
                   console.log("Raffle created!", receipt);
-                  onSuccess?.();
+                  toast.dismiss();
+                  toast.success("Raffle created successfully!");
+                  console.log("logs", receipt.logs);
+                  onSuccess?.(receipt.transactionHash);
                   onClose();
                   setTokenAddress("");
                 }}
                 onError={(error) => {
+                  toast.dismiss();
                   console.error("Error creating raffle:", error);
+                  toast.error("Failed to create raffle. Please try again.");
                 }}
               >
                 Create Raffle
