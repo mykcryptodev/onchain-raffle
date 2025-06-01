@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/raffle/[address]/page.tsx": {
+      "maxDuration": 30
+    }
+  }
+} 
