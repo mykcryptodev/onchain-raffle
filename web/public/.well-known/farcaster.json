@@ -1,21 +1,21 @@
 {
-  "domain": "YOUR_DOMAIN_HERE.com",
+  "domain": "onchain-raffle-sigma.com",
   "account": {
     "header": "YOUR_HEADER_HERE",
     "payload": "YOUR_PAYLOAD_HERE",
     "signature": "YOUR_SIGNATURE_HERE"
   },
   "profile": {
-    "name": "Raffle",
-    "tagline": "Create and participate in on-chain raffles",
-    "bio": "A decentralized raffle platform built on blockchain technology. Create transparent raffles with any ERC20 token as the prize.",
+    "name": "Rofl",
+    "tagline": "Create fair onchain raffles with any token",
+    "bio": "An onchain raffle platform built with verifiable randomness. Create transparent raffles with any ERC20 token as the prize.",
     "primaryColor": "#3B82F6",
-    "coverUrl": "https://YOUR_DOMAIN_HERE.com/cover.png",
-    "logoUrl": "https://YOUR_DOMAIN_HERE.com/logo.png"
+    "coverUrl": "onchain-raffle-sigma.vercel.app/cover.png",
+    "logoUrl": "onchain-raffle-sigma.vercel.app/logo.png"
   },
   "links": {
-    "ios": "https://YOUR_DOMAIN_HERE.com",
-    "android": "https://YOUR_DOMAIN_HERE.com", 
-    "web": "https://YOUR_DOMAIN_HERE.com"
+    "ios": "https://onchain-raffle-sigma.vercel.app",
+    "android": "https://onchain-raffle-sigma.vercel.app", 
+    "web": "https://onchain-raffle-sigma.vercel.app"
   }
 } 

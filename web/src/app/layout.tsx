@@ -8,23 +8,23 @@ import { FarcasterProvider } from "@/components/FarcasterProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Raffle - On-chain Raffles",
-  description: "Create and participate in transparent on-chain raffles with any ERC20 token",
+  title: "Rofl - Onchain Raffles",
+  description: "Create provably fair onchain raffles with any token",
   openGraph: {
-    title: "Raffle - On-chain Raffles",
-    description: "Create and participate in transparent on-chain raffles with any ERC20 token",
+    title: "Rofl - Onchain Raffles",
+    description: "Create provably fair onchain raffles with any token",
     images: ["/api/og"],
     type: "website",
   },
   other: {
     "fc:frame": JSON.stringify({
       version: "1.0.0",
-      imageUrl: `${process.env.NEXT_PUBLIC_URL || "https://YOUR_DOMAIN_HERE.com"}/api/og`,
+      imageUrl: `${process.env.NEXT_PUBLIC_URL || "https://onchain-raffle-sigma.vercel.app"}/api/og`,
       button: {
         title: "Open Raffle App",
         action: {
           type: "launch_mini_app",
-          url: process.env.NEXT_PUBLIC_URL || "https://YOUR_DOMAIN_HERE.com",
+          url: process.env.NEXT_PUBLIC_URL || "https://onchain-raffle-sigma.vercel.app",
         },
       },
     }),

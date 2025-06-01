@@ -19,8 +19,9 @@ export default function Home() {
             client={client}
             chain={chain}
             appMetadata={{
-              name: "Onchain Raffles",
-              url: "https://onchainraffles.com",
+              name: "Rofl",
+              description: "Create provably fair onchain raffles with any token",
+              url: "https://onchain-raffle-sigma.vercel.app",
             }}
           />
         </div>
@@ -50,11 +51,11 @@ function Header() {
       />
 
       <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-6 text-zinc-100">
-        Onchain Raffles
+        Rofl
       </h1>
 
       <p className="text-zinc-300 text-base">
-        Create and manage raffles with ease.
+        Create provably fair onchain raffles.
       </p>
     </header>
   );
