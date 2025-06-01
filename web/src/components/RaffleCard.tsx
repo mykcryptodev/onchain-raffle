@@ -1,0 +1,118 @@
+import { AccountAvatar, AccountName, AccountProvider, TokenIcon, TokenName, TokenProvider, TokenSymbol } from "thirdweb/react";
+import { client } from "@/constants/thirdweb";
+import { chain } from "@/constants/chain";
+import { ZERO_ADDRESS } from "thirdweb";
+import Link from "next/link";
+import AccountAvatarFallback from "./fallbacks/AccountAvatar";
+import AccountNameFallback from "./fallbacks/AccountName";
+import { TokenIconFallback } from "./fallbacks/TokenIcon";
+
+interface RaffleCardProps {
+  raffleAddress: string;
+  raffleOwner: string;
+  raffleToken: string;
+  raffleWinner: string;
+  index: number;
+}
+
+export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinner, index }: RaffleCardProps) {
+  const hasWinner = raffleWinner !== ZERO_ADDRESS;
+  
+  return (
+    <div className="p-6 border border-zinc-800 rounded-lg hover:bg-zinc-900 transition-colors">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h3 className="text-lg font-semibold">Raffle #{index + 1}</h3>
+          <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleAddress}`} className="text-xs text-zinc-500 font-mono" target="_blank">
+            {raffleAddress.slice(0, 6)}...{raffleAddress.slice(-4)}
+          </Link>
+        </div>
+        <Link href={`/raffle/${raffleAddress}`} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg font-medium text-sm">
+          {hasWinner ? "View Results" : "Enter Raffle"}
+        </Link>
+      </div>
+
+      {/* Main Content - Horizontal Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Token Section */}
+        <Link href={`${chain.blockExplorers?.[0]?.url}/token/${raffleToken}`} className="space-y-2">
+          <p className="text-sm text-zinc-400 uppercase tracking-wide">Prize Token</p>
+          <TokenProvider address={raffleToken} client={client} chain={chain}>
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+              <TokenIcon 
+                loadingComponent={<TokenIconFallback />}
+                fallbackComponent={<TokenIconFallback />}
+                className="w-10 h-10"
+              />
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
+                  <TokenName className="font-medium text-base" />
+                  <TokenSymbol className="text-sm text-zinc-400" />
+                </div>
+                <span className="text-xs text-zinc-500 font-mono">
+                  {raffleToken.slice(0, 6)}...{raffleToken.slice(-4)}
+                </span>
+              </div>
+            </div>
+          </TokenProvider>
+        </Link>
+
+        {/* Owner Section */}
+        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleOwner}`} className="space-y-2">
+          <p className="text-sm text-zinc-400 uppercase tracking-wide">Created By</p>
+          <AccountProvider address={raffleOwner} client={client}>
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+              <AccountAvatar 
+                loadingComponent={<AccountAvatarFallback />}
+                fallbackComponent={<AccountAvatarFallback />} 
+                className="w-10 h-10 rounded-lg"
+              />
+              <div className="flex flex-col">
+                <AccountName 
+                  loadingComponent={<AccountNameFallback address={raffleOwner} />}
+                  fallbackComponent={<AccountNameFallback address={raffleOwner} />}
+                  className="font-medium text-base"
+                />
+                <span className="text-xs text-zinc-500 font-mono">
+                  {raffleOwner.slice(0, 6)}...{raffleOwner.slice(-4)}
+                </span>
+              </div>
+            </div>
+          </AccountProvider>
+        </Link>
+
+        {/* Winner Section */}
+        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleWinner}`} className="space-y-2">
+          <p className="text-sm text-zinc-400 uppercase tracking-wide">Winner</p>
+          {!hasWinner ? (
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
+                <span className="text-xl">🎲</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-medium text-base text-zinc-400">No winner yet</span>
+                <span className="text-xs text-zinc-500">Raffle still active</span>
+              </div>
+            </div>
+          ) : (
+            <AccountProvider address={raffleWinner} client={client}>
+              <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+                <AccountAvatar className="w-10 h-10 rounded-lg" />
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🎉</span>
+                    <AccountName className="font-medium text-base" />
+                  </div>
+                  <span className="text-xs text-zinc-500 font-mono">
+                    {raffleWinner.slice(0, 6)}...{raffleWinner.slice(-4)}
+                  </span>
+                </div>
+              </div>
+            </AccountProvider>
+          )}
+        </Link>
+      </div>
+    </div>
+  );
+} 
