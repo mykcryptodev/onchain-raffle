@@ -1,6 +1,5 @@
 {
-  "domain": "rofl.house",
-  "account": {
+  "accountAssociation": {
     "header": "eyJmaWQiOjIxNzI0OCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGViYTc4NzE3YjZmMDU5Q0ZFMGI3NUU3NUMyZWQ0QkI3Y0E2NTE1NEYifQ",
     "payload": "eyJkb21haW4iOiJyb2ZsLmhvdXNlIn0",
     "signature": "MHhlZWYyYzcxM2M1NzAwYzg4MDYyOGU5NThjZjY4MDFjNDUzMzdkNzZjYzM3NmU3YzRmYTc4MTBiODdiNDI3N2VhNGE2ZDkxYzA4MDczM2NhMzNmZDMyNTQ4ODMzOWU3M2JjY2U3NjAzMmEwZjhmZGIxMWFhMjY4ZmM1OGE1ZmQzMDFi"
