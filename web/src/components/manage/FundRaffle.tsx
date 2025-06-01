@@ -61,13 +61,13 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
   return (
     <div className="border border-zinc-800 rounded-lg p-6">
       <h3 className="text-lg font-medium mb-3">Fund Prize Pool</h3>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <input
           type="number"
           placeholder="Amount to fund"
           value={fundAmount}
           onChange={(e) => setFundAmount(e.target.value)}
-          className="flex-1 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500"
+          className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500"
         />
         {requiresApproval ? (
           <TransactionButton
@@ -92,6 +92,7 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
               console.error("Approval error:", error);
               toast.error("Failed to approve tokens. Please try again.");
             }}
+            className="w-full sm:w-auto"
           >
             Approve
           </TransactionButton>
@@ -115,6 +116,7 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
               toast.dismiss();
               onFunded();
             }}
+            className="w-full sm:w-auto"
           >
             Fund Prize
           </TransactionButton>
