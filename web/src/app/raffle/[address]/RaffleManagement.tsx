@@ -132,7 +132,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       <div className="mb-8 flex justify-between items-start">
         <div className="min-w-0 flex-1 mr-4">
           <Link href="/" className="text-zinc-400 hover:text-zinc-300 mb-4 inline-block">
-            ← Back to all raffles
+            ← Back
           </Link>
           <h1 className="text-3xl font-bold mb-2">Raffle Management</h1>
           <p className="text-zinc-500 font-mono text-sm truncate">
@@ -243,41 +243,51 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         </div>
       </div>
 
+      {/* Public Actions - Available to everyone */}
+      {account && !hasWinner && (
+        <div className="space-y-6 mb-8">
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Contribute to Raffle</h2>
+            <p className="text-sm text-zinc-400 mb-4">
+              Anyone can add funds to increase the prize pool! Note: this does not make you eligible to win.
+            </p>
+          </div>
+
+          {/* Fund Prize - Available to everyone */}
+          <FundRaffle 
+            raffleContract={raffleContract} 
+            tokenAddress={raffleData.token} 
+            tokenDecimals={raffleData.tokenDecimals} 
+            onFunded={async () => {               
+              try {
+                const tokenContract = getContract({
+                  client,
+                  chain,
+                  address: raffleData.token,
+                });
+                
+                const { balanceOf } = await import("thirdweb/extensions/erc20");
+                const newBalance = await balanceOf({
+                  contract: tokenContract,
+                  address: address,
+                });
+                
+                setRaffleData(prev => ({
+                  ...prev,
+                  balance: newBalance.toString()
+                }));
+              } catch (error) {
+                console.error("Error fetching new balance:", error);
+              }
+            }}
+          />
+        </div>
+      )}
+
       {/* Management Actions - Only for Owner */}
       {isOwner && (
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold mb-4">Management Actions</h2>
-
-          {/* Fund Prize */}
-          {!hasWinner && (
-            <FundRaffle 
-              raffleContract={raffleContract} 
-              tokenAddress={raffleData.token} 
-              tokenDecimals={raffleData.tokenDecimals} 
-              onFunded={async () => {               
-                try {
-                  const tokenContract = getContract({
-                    client,
-                    chain,
-                    address: raffleData.token,
-                  });
-                  
-                  const { balanceOf } = await import("thirdweb/extensions/erc20");
-                  const newBalance = await balanceOf({
-                    contract: tokenContract,
-                    address: address,
-                  });
-                  
-                  setRaffleData(prev => ({
-                    ...prev,
-                    balance: newBalance.toString()
-                  }));
-                } catch (error) {
-                  console.error("Error fetching new balance:", error);
-                }
-              }}
-            />
-          )}
+          <h2 className="text-2xl font-semibold mb-4">Owner Actions</h2>
 
           {/* Select Winner */}
           {!hasWinner && balanceAsBigInt > 0n && (
@@ -313,11 +323,11 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       )}
 
       {/* Non-Owner View */}
-      {!isOwner && account && (
+      {!isOwner && account && hasWinner && !raffleData.prizeDistributed && (
         <div className="border border-zinc-800 rounded-lg p-6 text-center">
-          <p className="text-zinc-400 mb-2">You are not the owner of this raffle.</p>
+          <p className="text-zinc-400 mb-2">The raffle has ended!</p>
           <p className="text-sm text-zinc-500">
-            Only the raffle owner can manage this raffle.
+            Waiting for the owner to distribute the prize to the winner.
           </p>
         </div>
       )}
@@ -325,10 +335,10 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       {/* Connect Wallet Message */}
       {!account && (
         <div className="border border-zinc-800 rounded-lg p-6 text-center">
-          <p className="text-zinc-400 mb-2">Connect your wallet to manage this raffle.</p>
+          <p className="text-zinc-400 mb-2">Connect your wallet to interact with this raffle.</p>
           <ConnectButton client={client} />
           <p className="text-sm text-zinc-500 mt-2">
-            If you are the owner, you&apos;ll be able to manage the raffle after connecting.
+            {!hasWinner ? "Once connected, you can contribute to the prize pool!" : "View the raffle results."}
           </p>
         </div>
       )}
