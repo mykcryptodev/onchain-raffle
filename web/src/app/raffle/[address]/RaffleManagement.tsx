@@ -128,12 +128,12 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
-        <div>
+        <div className="min-w-0 flex-1 mr-4">
           <Link href="/" className="text-zinc-400 hover:text-zinc-300 mb-4 inline-block">
             ← Back to all raffles
           </Link>
           <h1 className="text-3xl font-bold mb-2">Raffle Management</h1>
-          <p className="text-zinc-500 font-mono text-sm">
+          <p className="text-zinc-500 font-mono text-sm truncate">
             {address}
           </p>
         </div>
@@ -143,22 +143,22 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       {/* Raffle Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Prize Token */}
-        <div className="border border-zinc-800 rounded-lg p-6">
+        <div className="border border-zinc-800 rounded-lg p-6 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Prize Token</p>
           <TokenProvider address={raffleData.token} client={client} chain={chain}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <TokenIcon 
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
                 iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleData.token}`}
-                className="w-10 h-10 rounded-lg" 
+                className="w-10 h-10 rounded-lg flex-shrink-0" 
               />
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <div className="flex items-baseline gap-2">
-                  <TokenName className="font-medium" />
-                  <TokenSymbol className="text-sm text-zinc-400" />
+                  <TokenName className="font-medium truncate" />
+                  <TokenSymbol className="text-sm text-zinc-400 flex-shrink-0" />
                 </div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 truncate">
                   Prize Pool: {toTokens(BigInt(raffleData.balance), raffleData.tokenDecimals)}
                 </p>
               </div>
@@ -167,20 +167,20 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         </div>
 
         {/* Owner */}
-        <div className="border border-zinc-800 rounded-lg p-6">
+        <div className="border border-zinc-800 rounded-lg p-6 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Owner</p>
           <AccountProvider address={raffleData.owner} client={client}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <AccountAvatar 
                 loadingComponent={<AccountAvatarFallback />}
                 fallbackComponent={<AccountAvatarFallback />}
-                className="w-10 h-10 rounded-lg"
+                className="w-10 h-10 rounded-lg flex-shrink-0"
               />
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <AccountName 
                   loadingComponent={<AccountNameFallback address={raffleData.owner} />}
                   fallbackComponent={<AccountNameFallback address={raffleData.owner} />}
-                  className="font-medium" 
+                  className="font-medium truncate block" 
                 />
                 <p className="text-xs text-zinc-500">
                   {isOwner ? "You are the owner" : "Not the owner"}
@@ -191,36 +191,36 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         </div>
 
         {/* Winner */}
-        <div className="border border-zinc-800 rounded-lg p-6">
+        <div className="border border-zinc-800 rounded-lg p-6 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Winner</p>
           {isSelectingWinner ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center flex-shrink-0">
                 <span className="text-xl animate-spin-slow inline-block">🎲</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">Selecting winner...</p>
                 <p className="text-xs text-zinc-500">Random selection in progress</p>
               </div>
             </div>
           ) : !hasWinner ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center flex-shrink-0">
                 <span className="text-xl">🎲</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">No winner yet</p>
                 <p className="text-xs text-zinc-500">Awaiting selection</p>
               </div>
             </div>
           ) : (
             <AccountProvider address={raffleData.winner} client={client}>
-              <div className="flex items-center gap-3">
-                <AccountAvatar className="w-10 h-10 rounded-lg" />
-                <div>
+              <div className="flex items-center gap-3 min-w-0">
+                <AccountAvatar className="w-10 h-10 rounded-lg flex-shrink-0" />
+                <div className="min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2">
-                    <span>🎉</span>
-                    <AccountName className="font-medium" />
+                    <span className="flex-shrink-0">🎉</span>
+                    <AccountName className="font-medium truncate" />
                   </div>
                   <p className="text-xs text-zinc-500">
                     {raffleData.prizeDistributed ? "Prize sent" : "Prize pending"}

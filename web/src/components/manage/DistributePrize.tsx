@@ -33,7 +33,7 @@ export const DistributePrize: FC<DistributePrizeProps> = ({
       <p className="text-sm text-zinc-400">
         Send the prize pool to the winner
       </p>
-      <p className="text-xs text-zinc-400 font-mono mb-3">
+      <p className="text-xs text-zinc-400 font-mono mb-3 truncate">
         {winner}
       </p>
       <div className="flex justify-end">

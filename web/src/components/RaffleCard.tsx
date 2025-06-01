@@ -36,20 +36,20 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
       {/* Main Content - Horizontal Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Token Section */}
-        <Link href={`${chain.blockExplorers?.[0]?.url}/token/${raffleToken}`} className="space-y-2">
+        <Link href={`${chain.blockExplorers?.[0]?.url}/token/${raffleToken}`} className="space-y-2 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide">Prize Token</p>
           <TokenProvider address={raffleToken} client={client} chain={chain}>
-            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg min-w-0">
               <TokenIcon 
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
                 iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleToken}`}
-                className="w-10 h-10 rounded-lg"
+                className="w-10 h-10 rounded-lg flex-shrink-0"
               />
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <TokenName className="font-medium text-base" />
-                  <TokenSymbol className="text-sm text-zinc-400" />
+                  <TokenName className="font-medium text-base truncate" />
+                  <TokenSymbol className="text-sm text-zinc-400 flex-shrink-0" />
                 </div>
                 <span className="text-xs text-zinc-500 font-mono">
                   {raffleToken.slice(0, 6)}...{raffleToken.slice(-4)}
@@ -60,20 +60,20 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
         </Link>
 
         {/* Owner Section */}
-        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleOwner}`} className="space-y-2">
+        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleOwner}`} className="space-y-2 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide">Created By</p>
           <AccountProvider address={raffleOwner} client={client}>
-            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg min-w-0">
               <AccountAvatar 
                 loadingComponent={<AccountAvatarFallback />}
                 fallbackComponent={<AccountAvatarFallback />} 
-                className="w-10 h-10 rounded-lg"
+                className="w-10 h-10 rounded-lg flex-shrink-0"
               />
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <AccountName 
                   loadingComponent={<AccountNameFallback address={raffleOwner} />}
                   fallbackComponent={<AccountNameFallback address={raffleOwner} />}
-                  className="font-medium text-base"
+                  className="font-medium text-base truncate"
                 />
                 <span className="text-xs text-zinc-500 font-mono">
                   {raffleOwner.slice(0, 6)}...{raffleOwner.slice(-4)}
@@ -84,35 +84,35 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
         </Link>
 
         {/* Winner Section */}
-        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleWinner}`} className="space-y-2">
+        <Link href={`${chain.blockExplorers?.[0]?.url}/address/${raffleWinner}`} className="space-y-2 min-w-0">
           <p className="text-sm text-zinc-400 uppercase tracking-wide">
             Winner {prizeDistributed && hasWinner && <span className="text-green-500">✓</span>}
           </p>
           {!hasWinner ? (
-            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
-              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
+            <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center flex-shrink-0">
                 <span className="text-xl">🎲</span>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <span className="font-medium text-base text-zinc-400">No winner yet</span>
                 <span className="text-xs text-zinc-500">Raffle still active</span>
               </div>
             </div>
           ) : (
             <AccountProvider address={raffleWinner} client={client}>
-              <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg">
+              <div className="flex items-center gap-3 bg-zinc-800/50 p-3 rounded-lg min-w-0">
                 <AccountAvatar 
                   loadingComponent={<AccountAvatarFallback />}
                   fallbackComponent={<AccountAvatarFallback />}
-                  className="w-10 h-10 rounded-lg"
+                  className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🎉</span>
+                    <span className="text-xl flex-shrink-0">🎉</span>
                     <AccountName 
                       loadingComponent={<AccountNameFallback address={raffleWinner} />}
                       fallbackComponent={<AccountNameFallback address={raffleWinner} />}
-                      className="font-medium text-base"
+                      className="font-medium text-base truncate"
                     />
                   </div>
                   <span className="text-xs text-zinc-500 font-mono">

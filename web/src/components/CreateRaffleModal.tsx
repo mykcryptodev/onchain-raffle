@@ -82,19 +82,19 @@ export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({
               <div className="p-4 bg-zinc-800 rounded-lg">
                 <p className="text-sm text-zinc-400 mb-2">Token Preview</p>
                 <TokenProvider address={tokenAddress as `0x${string}`} client={client} chain={chain}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <TokenIcon 
-                      className="w-10 h-10 rounded-lg"
+                      className="w-10 h-10 rounded-lg flex-shrink-0"
                       iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${tokenAddress}`}
                       loadingComponent={<TokenIconFallback />}
                       fallbackComponent={<TokenIconFallback />}
                     />
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <TokenName className="font-medium" />
-                        <TokenSymbol className="text-sm text-zinc-400" />
+                        <TokenName className="font-medium truncate" />
+                        <TokenSymbol className="text-sm text-zinc-400 flex-shrink-0" />
                       </div>
-                      <p className="text-xs text-zinc-500 font-mono">
+                      <p className="text-xs text-zinc-500 font-mono truncate">
                         {tokenAddress.slice(0, 6)}...{tokenAddress.slice(-4)}
                       </p>
                     </div>
