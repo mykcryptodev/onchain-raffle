@@ -44,7 +44,7 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
                 iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleToken}`}
-                className="w-10 h-10"
+                className="w-10 h-10 rounded-lg"
               />
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-2">

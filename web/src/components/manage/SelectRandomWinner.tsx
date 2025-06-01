@@ -7,7 +7,7 @@ import { chain } from "@/constants/chain";
 import { client } from "@/constants/thirdweb";
 import { toast } from "react-toastify";
 
-const BUFFER_PERCENTAGE = 10n; // 10% buffer
+const BUFFER_PERCENTAGE = 20n; // 20% buffer
 
 type SelectRandomWinnerProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;

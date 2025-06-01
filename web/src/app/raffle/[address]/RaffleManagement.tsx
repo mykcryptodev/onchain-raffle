@@ -106,7 +106,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                 loadingComponent={<TokenIconFallback />}
                 fallbackComponent={<TokenIconFallback />}
                 iconResolver={`/api/token-image?chainName=${chain.name}&tokenAddress=${raffleData.token}`}
-                className="w-10 h-10" 
+                className="w-10 h-10 rounded-lg" 
               />
               <div>
                 <div className="flex items-baseline gap-2">
