@@ -5,11 +5,11 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { FarcasterProvider } from "@/components/FarcasterProvider";
 
 export const metadata: Metadata = {
-  title: "Raffle - On-chain Raffles",
-  description: "Create and participate in transparent on-chain raffles with any ERC20 token",
+  title: "Rofl House",
+  description: "Create provably fair onchain raffles with any token",
   openGraph: {
-    title: "Raffle - On-chain Raffles",
-    description: "Create and participate in transparent on-chain raffles with any ERC20 token",
+    title: "Rofl House",
+    description: "Create provably fair onchain raffles with any token",
     images: ["/api/og"],
     type: "website",
   },
