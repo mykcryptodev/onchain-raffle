@@ -10,12 +10,12 @@
     "tagline": "Create fair onchain raffles with any token",
     "bio": "An onchain raffle platform built with verifiable randomness. Create transparent raffles with any ERC20 token as the prize.",
     "primaryColor": "#3B82F6",
-    "coverUrl": "onchain-raffle-sigma.vercel.app/cover.png",
-    "logoUrl": "onchain-raffle-sigma.vercel.app/logo.png"
+    "coverUrl": "https://rofl.house/cover.png",
+    "logoUrl": "https://rofl.house/logo.png"
   },
   "links": {
-    "ios": "https://onchain-raffle-sigma.vercel.app",
-    "android": "https://onchain-raffle-sigma.vercel.app", 
-    "web": "https://onchain-raffle-sigma.vercel.app"
+    "ios": "https://rofl.house",
+    "android": "https://rofl.house", 
+    "web": "https://rofl.house"
   }
 } 

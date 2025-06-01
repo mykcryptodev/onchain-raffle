@@ -19,9 +19,9 @@ export default function Home() {
             client={client}
             chain={chain}
             appMetadata={{
-              name: "Rofl",
+              name: "Rofl House",
               description: "Create provably fair onchain raffles with any token",
-              url: "https://onchain-raffle-sigma.vercel.app",
+              url: "https://rofl.house",
             }}
           />
         </div>
