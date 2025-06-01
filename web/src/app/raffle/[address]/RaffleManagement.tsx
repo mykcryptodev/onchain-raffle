@@ -11,6 +11,7 @@ import { TokenIconFallback } from "@/components/fallbacks/TokenIcon";
 import { AccountAvatarFallback } from "@/components/fallbacks/AccountAvatar";
 import { AccountNameFallback } from "@/components/fallbacks/AccountName";
 import { FundRaffle } from "@/components/manage/FundRaffle";
+import { SelectRandomWinner } from "@/components/manage/SelectRandomWinner";
 
 interface RaffleData {
   owner: `0x${string}`;
@@ -32,7 +33,6 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const switchChain = useSwitchActiveWalletChain();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
-  const [eligibleAddresses, setEligibleAddresses] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const raffleContract = getContract({
@@ -49,36 +49,6 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const switchChainIfNecessary = async () => {
     if (activeChain?.id !== chain.id) {
       await switchChain(chain);
-    }
-  };
-
-  const handleRequestWinner = async () => {
-    if (!account || !eligibleAddresses) return;
-    await switchChainIfNecessary();
-    
-    setIsProcessing(true);
-    try {
-      const addresses = eligibleAddresses
-        .split(/[\n,]/)
-        .map(addr => addr.trim())
-        .filter(addr => addr.length > 0);
-      
-      const requestTx = raffleAbi.requestRandomWinner({
-        contract: raffleContract,
-        addresses,
-      });
-      
-      await sendTransaction({
-        transaction: requestTx,
-        account,
-      });
-      
-      alert("Random winner request submitted! The winner will be selected shortly.");
-      setEligibleAddresses("");
-    } catch (error) {
-      console.error("Error requesting winner:", error);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -215,26 +185,11 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
 
           {/* Select Winner */}
           {!hasWinner && balanceAsBigInt > 0n && (
-            <div className="border border-zinc-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium mb-3">Select Random Winner</h3>
-              <p className="text-sm text-zinc-400 mb-3">
-                Enter eligible addresses (one per line or comma-separated)
-              </p>
-              <textarea
-                placeholder="0x1234...&#10;0x5678...&#10;0xabcd..."
-                value={eligibleAddresses}
-                onChange={(e) => setEligibleAddresses(e.target.value)}
-                className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 mb-3"
-                disabled={isProcessing}
-              />
-              <button
-                onClick={handleRequestWinner}
-                disabled={isProcessing || !eligibleAddresses}
-                className="w-full px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 disabled:cursor-not-allowed transition-colors rounded-lg font-medium"
-              >
-                {isProcessing ? "Processing..." : "Request Random Winner"}
-              </button>
-            </div>
+            <SelectRandomWinner
+              raffleContract={raffleContract}
+              balance={raffleData.balance}
+              hasWinner={hasWinner}
+            />
           )}
 
           {/* Distribute Prize */}
