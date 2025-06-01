@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton } from "thirdweb/react";
-import { getContract, readContract, toTokens, ZERO_ADDRESS } from "thirdweb";
+import { getContract, toTokens, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import { DistributePrize } from "@/components/manage/DistributePrize";
 import { RaffleData } from "@/types/raffle";
 import * as raffleAbi from "@/abis/raffle";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
+import { WatchRaffle } from "@/components/WatchRaffle";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -25,6 +26,35 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const account = useActiveAccount();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
+
+  const raffleContract = getContract({
+    client,
+    chain,
+    address,
+  });
+
+  // Watch for raffle events
+  const handleWinnerSelected = (winner: `0x${string}`) => {
+    setRaffleData(prev => ({
+      ...prev,
+      winner,
+    }));
+  };
+
+  const handlePrizeDistributed = () => {
+    setRaffleData(prev => ({
+      ...prev,
+      prizeDistributed: true,
+      balance: "0", // Prize has been distributed, balance is now 0
+    }));
+  };
+
+  const handleBalanceUpdate = (balance: string) => {
+    setRaffleData(prev => ({
+      ...prev,
+      balance,
+    }));
+  };
 
   useEffect(() => {
     // on mount, fetch the raffle data on the client side to make sure it's up to date
@@ -69,18 +99,21 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
     fetchRaffleData();
   }, [address])
 
-  const raffleContract = getContract({
-    client,
-    chain,
-    address,
-  });
-
   const isOwner = account?.address === raffleData.owner;
   const hasWinner = raffleData.winner !== ZERO_ADDRESS;
   const balanceAsBigInt = BigInt(raffleData.balance);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Event watcher component */}
+      <WatchRaffle
+        raffleAddress={address}
+        tokenAddress={raffleData.token}
+        onWinnerSelected={handleWinnerSelected}
+        onPrizeDistributed={handlePrizeDistributed}
+        onBalanceUpdate={handleBalanceUpdate}
+      />
+      
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>
@@ -226,6 +259,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
           <DistributePrize
             raffleContract={raffleContract}
             hasWinner={hasWinner}
+            winner={raffleData.winner}
             prizeDistributed={raffleData.prizeDistributed}
             onSuccess={() => {
               setRaffleData({ ...raffleData, prizeDistributed: true });

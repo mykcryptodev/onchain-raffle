@@ -25,10 +25,10 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
             className="text-lg font-semibold"
             href={`${chain.blockExplorers?.[0]?.url}/address/${raffleAddress}`} 
             target="_blank">
-            Raffle {shortenAddress(raffleAddress)}
+            {shortenAddress(raffleAddress)}
           </Link>
         </div>
-        <Link href={`/raffle/${raffleAddress}`} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg font-medium text-sm">
+        <Link href={`/raffle/${raffleAddress}`} className="py-2 px-4 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-lg font-medium text-sm">
           View Raffle
         </Link>
       </div>

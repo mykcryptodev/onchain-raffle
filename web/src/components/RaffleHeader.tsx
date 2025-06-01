@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { CreateRaffleModal } from "./CreateRaffleModal";
-import { useRouter } from "next/navigation";
+import { WatchFactory } from "./WatchFactory";
 
 export function RaffleHeader() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const router = useRouter();
 
   return (
     <>
+      {/* Watch for newly created raffles */}
+      <WatchFactory />
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Raffles</h2>
         <button
@@ -23,8 +25,9 @@ export function RaffleHeader() {
       <CreateRaffleModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={(raffleAddress) => {
-          router.push(`/raffle/${raffleAddress}`);
+        onSuccess={() => {
+          // WatchFactory component will handle the redirect
+          console.log("Raffle created successfully");
         }}
       />
     </>

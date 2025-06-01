@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 type DistributePrizeProps = {
   raffleContract: ContractOptions<[], `0x${string}`>;
   hasWinner: boolean;
+  winner: `0x${string}`;
   prizeDistributed: boolean;
   onSuccess?: () => void;
 }
@@ -14,6 +15,7 @@ type DistributePrizeProps = {
 export const DistributePrize: FC<DistributePrizeProps> = ({ 
   raffleContract, 
   hasWinner,
+  winner,
   prizeDistributed,
   onSuccess
 }) => {
@@ -28,8 +30,11 @@ export const DistributePrize: FC<DistributePrizeProps> = ({
   return (
     <div className="border border-zinc-800 rounded-lg p-6">
       <h3 className="text-lg font-medium mb-3">Distribute Prize</h3>
-      <p className="text-sm text-zinc-400 mb-3">
+      <p className="text-sm text-zinc-400">
         Send the prize pool to the winner
+      </p>
+      <p className="text-xs text-zinc-400 font-mono mb-3">
+        {winner}
       </p>
       <div className="flex justify-end">
         <TransactionButton
@@ -41,7 +46,6 @@ export const DistributePrize: FC<DistributePrizeProps> = ({
             toast.dismiss();
             onSuccess?.();
             console.log("Prize distributed successfully!");
-            toast.success("Prize distributed successfully!");
           }}
           onError={(error) => {
             toast.dismiss();

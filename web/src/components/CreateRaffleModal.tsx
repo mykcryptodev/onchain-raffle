@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 interface CreateRaffleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (raffleAddress: `0x${string}`) => void;
+  onSuccess?: () => void;
 }
 
 export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({ 
@@ -121,7 +121,7 @@ export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({
                   toast.dismiss();
                   toast.success("Raffle created successfully!");
                   console.log("logs", receipt.logs);
-                  onSuccess?.(receipt.transactionHash);
+                  onSuccess?.();
                   onClose();
                   setTokenAddress("");
                 }}
