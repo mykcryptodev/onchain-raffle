@@ -16,6 +16,7 @@ import { RaffleData } from "@/types/raffle";
 import * as raffleAbi from "@/abis/raffle";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { WatchRaffle } from "@/components/WatchRaffle";
+import { useFarcaster } from "@/hooks/useFarcaster";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -24,6 +25,7 @@ interface RaffleManagementProps {
 
 export default function RaffleManagement({ address, initialRaffleData }: RaffleManagementProps) {
   const account = useActiveAccount();
+  const { shareRaffle } = useFarcaster();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
 
@@ -137,7 +139,16 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
             {address}
           </p>
         </div>
-        <ConnectButton client={client} />
+        <div className="flex gap-2">
+          <button
+            onClick={() => shareRaffle(address)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
+          >
+            <span>📤</span>
+            Share
+          </button>
+          <ConnectButton client={client} />
+        </div>
       </div>
 
       {/* Raffle Info Cards */}
