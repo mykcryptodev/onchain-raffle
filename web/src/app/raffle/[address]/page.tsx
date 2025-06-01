@@ -1,10 +1,14 @@
-import { getContract } from "thirdweb";
+import { getContract, isAddress } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import * as raffleAbi from "@/abis/raffle";
 import RaffleManagement from "./RaffleManagement";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { RaffleData } from "@/types/raffle";
+
+// Force dynamic rendering to prevent 404s during cold starts
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface PageProps {
   params: Promise<{
@@ -14,6 +18,20 @@ interface PageProps {
 
 export default async function RafflePage({ params }: PageProps) {
   const { address } = await params;
+  
+  // Validate address format
+  if (!address || !isAddress(address)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Invalid raffle address</p>
+          <a href="/" className="text-blue-500 hover:underline">
+            Return to home
+          </a>
+        </div>
+      </div>
+    );
+  }
   
   const raffleContract = getContract({
     client,
