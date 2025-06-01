@@ -38,6 +38,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
     setRaffleData(prev => ({
       ...prev,
       winner,
+      lastRequestId: 0n, // Clear the request ID once winner is selected
     }));
   };
 
@@ -56,6 +57,13 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
     }));
   };
 
+  const handleRandomRequested = (requestId: bigint) => {
+    setRaffleData(prev => ({
+      ...prev,
+      lastRequestId: requestId,
+    }));
+  };
+
   useEffect(() => {
     // on mount, fetch the raffle data on the client side to make sure it's up to date
     const fetchRaffleData = async () => {
@@ -65,11 +73,12 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         address,
       });
 
-      const [owner, token, winner, prizeDistributed] = await Promise.all([
+      const [owner, token, winner, prizeDistributed, lastRequestId] = await Promise.all([
         raffleAbi.owner({ contract: raffleContract }),
         raffleAbi.token({ contract: raffleContract }),
         raffleAbi.winner({ contract: raffleContract }),
         raffleAbi.prizeDistributed({ contract: raffleContract }),
+        raffleAbi.lastRequestId({ contract: raffleContract }),
       ]);
 
       const tokenContract = getContract({
@@ -94,6 +103,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         prizeDistributed: prizeDistributed as boolean,
         tokenDecimals: Number(tokenDecimals),
         balance: balance.toString(),
+        lastRequestId,
       });
     }
     fetchRaffleData();
@@ -101,6 +111,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
 
   const isOwner = account?.address === raffleData.owner;
   const hasWinner = raffleData.winner !== ZERO_ADDRESS;
+  const isSelectingWinner = raffleData.lastRequestId > 0n && !hasWinner;
   const balanceAsBigInt = BigInt(raffleData.balance);
 
   return (
@@ -112,6 +123,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         onWinnerSelected={handleWinnerSelected}
         onPrizeDistributed={handlePrizeDistributed}
         onBalanceUpdate={handleBalanceUpdate}
+        onRandomRequested={handleRandomRequested}
       />
       
       {/* Header */}
@@ -181,7 +193,17 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         {/* Winner */}
         <div className="border border-zinc-800 rounded-lg p-6">
           <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Winner</p>
-          {!hasWinner ? (
+          {isSelectingWinner ? (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
+                <span className="text-xl animate-spin-slow inline-block">🎲</span>
+              </div>
+              <div>
+                <p className="font-medium">Selecting winner...</p>
+                <p className="text-xs text-zinc-500">Random selection in progress</p>
+              </div>
+            </div>
+          ) : !hasWinner ? (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-zinc-700 flex items-center justify-center">
                 <span className="text-xl">🎲</span>

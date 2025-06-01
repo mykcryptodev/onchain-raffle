@@ -14,6 +14,7 @@ interface WatchRaffleProps {
   onWinnerSelected: (winner: `0x${string}`) => void;
   onPrizeDistributed: () => void;
   onBalanceUpdate: (balance: string) => void;
+  onRandomRequested?: (requestId: bigint) => void;
 }
 
 export function WatchRaffle({ 
@@ -21,7 +22,8 @@ export function WatchRaffle({
   tokenAddress, 
   onWinnerSelected, 
   onPrizeDistributed,
-  onBalanceUpdate 
+  onBalanceUpdate,
+  onRandomRequested 
 }: WatchRaffleProps) {
   const processedEvents = useRef<Set<string>>(new Set());
 
@@ -51,6 +53,7 @@ export function WatchRaffle({
             raffleAbi.winnerSelectedEvent(),
             raffleAbi.prizeDistributedEvent(),
             raffleAbi.prizeFundedEvent(),
+            raffleAbi.randomRequestedEvent(),
           ],
           latestBlockNumber: currentBlock,
           onEvents: async (events) => {
@@ -68,20 +71,34 @@ export function WatchRaffle({
               processedEvents.current.add(eventId);
               console.log(`Processing ${event.eventName} event:`, eventId);
               
-              if (event.eventName === "WinnerSelected") {
-                const winnerAddress = event.args.winner as `0x${string}`;
+              if (event.eventName === "RandomRequested") {
+                const args = event.args as { requestId: bigint; requestPrice: bigint };
+                const requestId = args.requestId;
+                console.log("Random winner requested, request ID:", requestId);
+                
+                // Update the parent component
+                onRandomRequested?.(requestId);
+                
+                // Show a toast notification
+                toast.loading("Random winner selection initiated...");
+              } else if (event.eventName === "WinnerSelected") {
+                const args = event.args as { winner: `0x${string}` };
+                const winnerAddress = args.winner;
                 console.log("Winner selected:", winnerAddress);
                 
                 // Update the parent component
                 onWinnerSelected(winnerAddress);
+
+                toast.dismiss();
                 
                 // Show a toast notification
                 toast.success(`Winner selected: ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}`, {
                   autoClose: 8000,
                 });
               } else if (event.eventName === "PrizeDistributed") {
-                const winnerAddress = event.args.winner as `0x${string}`;
-                const amount = event.args.amount as bigint;
+                const args = event.args as { winner: `0x${string}`; amount: bigint };
+                const winnerAddress = args.winner;
+                const amount = args.amount;
                 console.log("Prize distributed:", winnerAddress, amount);
                 
                 // Update the parent component
@@ -92,8 +109,9 @@ export function WatchRaffle({
                   autoClose: 8000,
                 });
               } else if (event.eventName === "PrizeFunded") {
-                const from = event.args.from as `0x${string}`;
-                const amount = event.args.amount as bigint;
+                const args = event.args as { from: `0x${string}`; amount: bigint };
+                const from = args.from;
+                const amount = args.amount;
                 console.log("Prize funded by:", from, "amount:", amount);
                 
                 // Fetch the new balance
@@ -113,7 +131,7 @@ export function WatchRaffle({
                   onBalanceUpdate(newBalance.toString());
                   
                   // Show a toast notification
-                  toast.info(`Raffle funded by ${from.slice(0, 6)}...${from.slice(-4)}`, {
+                  toast.success(`Raffle funded by ${from.slice(0, 6)}...${from.slice(-4)}`, {
                     autoClose: 5000,
                   });
                 } catch (error) {
@@ -136,7 +154,7 @@ export function WatchRaffle({
         unwatch();
       }
     };
-  }, [raffleContract, raffleAddress, tokenAddress, onWinnerSelected, onPrizeDistributed, onBalanceUpdate]);
+  }, [raffleContract, raffleAddress, tokenAddress, onWinnerSelected, onPrizeDistributed, onBalanceUpdate, onRandomRequested]);
 
   // This component doesn't render anything
   return null;

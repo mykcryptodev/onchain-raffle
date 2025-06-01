@@ -80,7 +80,6 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           }}
           onTransactionConfirmed={() => {
             toast.dismiss();
-            toast.success("Random winner request submitted! The winner will be selected shortly.");
             setEligibleAddresses("");
           }}
           onError={(error) => {

@@ -57,7 +57,7 @@ export function WatchFactory() {
               
               // Check if the creator is the connected address
               if (creator.toLowerCase() === account.address.toLowerCase()) {
-                console.log("Raffle created by connected user, redirecting...");                
+                console.log("Raffle created by connected user, redirecting...");            
                 // Redirect to the raffle page
                 router.push(`/raffle/${raffleAddress}`);
               }

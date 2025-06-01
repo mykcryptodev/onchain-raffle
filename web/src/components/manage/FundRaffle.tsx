@@ -113,7 +113,6 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
             onTransactionConfirmed={() => {
               console.log("transaction confirmed");
               toast.dismiss();
-              toast.success("Raffle funded successfully!");
               onFunded();
             }}
           >

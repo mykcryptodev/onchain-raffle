@@ -23,11 +23,12 @@ export default async function RafflePage({ params }: PageProps) {
 
   try {
     // Fetch all raffle data on the server
-    const [owner, token, winner, prizeDistributed] = await Promise.all([
+    const [owner, token, winner, prizeDistributed, lastRequestId] = await Promise.all([
       raffleAbi.owner({ contract: raffleContract }),
       raffleAbi.token({ contract: raffleContract }),
       raffleAbi.winner({ contract: raffleContract }),
       raffleAbi.prizeDistributed({ contract: raffleContract }),
+      raffleAbi.lastRequestId({ contract: raffleContract }),
     ]);
 
     const tokenContract = getContract({
@@ -53,6 +54,7 @@ export default async function RafflePage({ params }: PageProps) {
       winner: winner as `0x${string}`,
       prizeDistributed,
       balance: balance.toString(),
+      lastRequestId,
     };
 
     return <RaffleManagement address={address} initialRaffleData={raffleData} />;
