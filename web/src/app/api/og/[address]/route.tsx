@@ -1,10 +1,11 @@
 import { ImageResponse } from "@vercel/og";
 import { NextRequest } from "next/server";
-import { getContract } from "thirdweb";
+import { getContract, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import * as raffleAbi from "@/abis/raffle";
-import { balanceOf, decimals } from "thirdweb/extensions/erc20";
+import { shortenAddress } from "thirdweb/utils";
+import { getCurrencyMetadata } from "thirdweb/extensions/erc20";
 
 export const runtime = "edge";
 
@@ -37,14 +38,11 @@ export async function GET(request: NextRequest, { params }: Params) {
       address: token,
     });
 
-    const [tokenDecimals, balance] = await Promise.all([
-      decimals({ contract: tokenContract }),
-      balanceOf({ contract: tokenContract, address: address as `0x${string}` }),
-    ]);
+    const metadata = await getCurrencyMetadata({ contract: tokenContract });
+    const { name } = metadata;
 
-    const prizeAmount = (Number(balance) / Math.pow(10, tokenDecimals)).toFixed(2);
-    const shortOwner = `${owner.slice(0, 6)}...${owner.slice(-4)}`;
-    const isActive = !prizeDistributed && winner === "0x0000000000000000000000000000000000000000";
+    const shortOwner = shortenAddress(owner);
+    const isActive = !prizeDistributed && winner === ZERO_ADDRESS;
 
     return new ImageResponse(
       (
@@ -104,55 +102,8 @@ export async function GET(request: NextRequest, { params }: Params) {
                 marginBottom: "30px",
               }}
             >
-              🎟️ Raffle
+              🎟️ {name} Raffle
             </h1>
-
-            {/* Prize Amount */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                marginBottom: "40px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "24px",
-                  color: "#9ca3af",
-                  margin: "0",
-                  marginBottom: "10px",
-                }}
-              >
-                Prize Pool
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "64px",
-                    fontWeight: "bold",
-                    color: "#f3f4f6",
-                  }}
-                >
-                  {prizeAmount}
-                </span>
-                <span
-                  style={{
-                    fontSize: "36px",
-                    color: "#3b82f6",
-                    fontWeight: "600",
-                  }}
-                >
-                  TOKENS
-                </span>
-              </div>
-            </div>
 
             {/* Creator Info */}
             <div
@@ -173,7 +124,7 @@ export async function GET(request: NextRequest, { params }: Params) {
             </div>
 
             {/* Winner Info (if exists) */}
-            {winner !== "0x0000000000000000000000000000000000000000" && (
+            {winner !== ZERO_ADDRESS && (
               <div
                 style={{
                   display: "flex",
