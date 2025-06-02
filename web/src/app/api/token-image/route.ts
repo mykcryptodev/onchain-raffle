@@ -3,6 +3,39 @@ import { client } from '@/constants/thirdweb';
 import { NextRequest, NextResponse } from 'next/server';
 import { getContract, readContract } from 'thirdweb';
 
+// Function to try fetching image from token contract (e.g., Clanker tokens)
+async function tryFetchTokenImage(tokenAddress: string): Promise<NextResponse | null> {
+  try {
+    const tokenContract = getContract({
+      chain,
+      address: tokenAddress,
+      client,
+    });
+
+    const image = await readContract({
+      contract: tokenContract,
+      method: "function image() view returns (string)",
+    });
+
+    if (image) {
+      const imageResponse = await fetch(image);
+      if (imageResponse.ok) {
+        const imageBuffer = await imageResponse.arrayBuffer();
+        return new NextResponse(imageBuffer, {
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+          },
+        });
+      }
+    }
+  } catch (error) {
+    // If reading the contract fails, return null
+    console.log('Failed to fetch image from token contract:', error);
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -27,7 +60,11 @@ export async function GET(request: NextRequest) {
     });
 
     if (!res.ok) {      
-      // Return 404 if token not found
+      // Try fetching from token contract before returning 404
+      const tokenImage = await tryFetchTokenImage(tokenAddress);
+      if (tokenImage) {
+        return tokenImage;
+      }
       return new NextResponse(null, { status: 404 });
     }
 
@@ -35,27 +72,10 @@ export async function GET(request: NextRequest) {
     const imageUrl = json.image?.large;
 
     if (!imageUrl) {
-      // try fetching the "image" function on the token in case its a clanker
-      const tokenContract = getContract({
-        chain,
-        address: tokenAddress,
-        client,
-      });
-
-      const image = await readContract({
-        contract: tokenContract,
-        method: "function image() view returns (string)",
-      });
-
-      if (image) {
-        const imageResponse = await fetch(image);
-        const imageBuffer = await imageResponse.arrayBuffer();
-        return new NextResponse(imageBuffer, {
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-          },
-        });
+      // Try fetching from token contract before returning 404
+      const tokenImage = await tryFetchTokenImage(tokenAddress);
+      if (tokenImage) {
+        return tokenImage;
       }
       return new NextResponse(null, { status: 404 });
     }
@@ -64,6 +84,11 @@ export async function GET(request: NextRequest) {
     const imageResponse = await fetch(imageUrl);
     
     if (!imageResponse.ok) {
+      // Try fetching from token contract before returning 404
+      const tokenImage = await tryFetchTokenImage(tokenAddress);
+      if (tokenImage) {
+        return tokenImage;
+      }
       return new NextResponse(null, { status: 404 });
     }
 
