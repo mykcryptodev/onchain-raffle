@@ -5,7 +5,11 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { FarcasterProvider } from "@/components/FarcasterProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: "Rofl House",
   description: "Create provably fair onchain raffles with any token",
   openGraph: {
@@ -17,12 +21,12 @@ export const metadata: Metadata = {
   other: {
     "fc:frame": JSON.stringify({
       version: "1.0.0",
-      imageUrl: `${process.env.NEXT_PUBLIC_URL || "https://YOUR_DOMAIN_HERE.com"}/api/og`,
+      imageUrl: `${APP_URL}/api/og`,
       button: {
         title: "Open Raffle App",
         action: {
           type: "launch_mini_app",
-          url: process.env.NEXT_PUBLIC_URL || "https://YOUR_DOMAIN_HERE.com",
+          url: APP_URL,
         },
       },
     }),

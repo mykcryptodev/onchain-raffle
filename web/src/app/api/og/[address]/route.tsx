@@ -100,7 +100,7 @@ export async function GET(request: NextRequest, { params }: Params) {
             }}
           />
           
-          {/* Noise texture overlay */}
+          {/* Noise texture overlay - using a simpler pattern */}
           <div
             style={{
               position: "absolute",
@@ -108,7 +108,9 @@ export async function GET(request: NextRequest, { params }: Params) {
               left: "0",
               right: "0",
               bottom: "0",
-              backgroundImage: "repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0.03) 0deg 10deg, transparent 10deg 20deg)",
+              background: "linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%), linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%)",
+              backgroundSize: "30px 30px",
+              backgroundPosition: "0 0, 15px 15px",
             }}
           />
 
@@ -187,7 +189,7 @@ export async function GET(request: NextRequest, { params }: Params) {
                   textShadow: "0 0 60px rgba(139, 92, 246, 0.5)",
                 }}
               >
-                RAFFLE
+                ROFL HOUSE
               </h1>
             </div>
 
@@ -323,7 +325,7 @@ export async function GET(request: NextRequest, { params }: Params) {
                       fontSize: "14px",
                       textTransform: "capitalize",
                     }}>
-                      {ownerProfile.type === "ens" ? "ENS" : ownerProfile.type}
+                      {shortenAddress(owner)}
                     </span>
                   )}
                 </div>
@@ -389,7 +391,7 @@ export async function GET(request: NextRequest, { params }: Params) {
                         fontSize: "14px",
                         textTransform: "capitalize",
                       }}>
-                        {winnerProfile.type === "ens" ? "ENS" : winnerProfile.type}
+                        {shortenAddress(winner)}
                       </span>
                     )}
                   </div>
@@ -496,7 +498,7 @@ export async function GET(request: NextRequest, { params }: Params) {
               marginBottom: "20px",
             }}
           >
-            RAFFLE
+            ROFL HOUSE
           </h1>
           <p
             style={{
