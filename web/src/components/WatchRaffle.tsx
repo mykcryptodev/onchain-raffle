@@ -90,6 +90,8 @@ export function WatchRaffle({
                 } catch (error) {
                   console.error('Failed to invalidate cache:', error);
                 }
+
+                toast.dismiss();
                 
                 // Show a toast notification
                 toast.success(`Winner selected: ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}!`, {

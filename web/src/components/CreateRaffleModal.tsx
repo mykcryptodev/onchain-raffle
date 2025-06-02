@@ -119,8 +119,6 @@ export const CreateRaffleModal: FC<CreateRaffleModalProps> = ({
                 onTransactionConfirmed={async (receipt) => {
                   console.log("Raffle created!", receipt);
                   toast.dismiss();
-                  toast.success("Raffle created successfully!");
-                  console.log("logs", receipt.logs);
                   onSuccess?.();
                   onClose();
                   setTokenAddress("");

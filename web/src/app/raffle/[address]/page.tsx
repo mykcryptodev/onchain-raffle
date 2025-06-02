@@ -1,9 +1,5 @@
-import { getContract, isAddress } from "thirdweb";
-import { client } from "@/constants/thirdweb";
-import { chain } from "@/constants/chain";
-import * as raffleAbi from "@/abis/raffle";
+import { isAddress } from "thirdweb";
 import RaffleManagement from "./RaffleManagement";
-import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { RaffleData } from "@/types/raffle";
 
 // Force dynamic rendering to prevent 404s during cold starts
@@ -32,47 +28,31 @@ export default async function RafflePage({ params }: PageProps) {
       </div>
     );
   }
-  
-  const raffleContract = getContract({
-    client,
-    chain,
-    address,
-  });
 
   try {
-    // Fetch all raffle data on the server
-    const [owner, token, winner, prizeDistributed, lastRequestId] = await Promise.all([
-      raffleAbi.owner({ contract: raffleContract }),
-      raffleAbi.token({ contract: raffleContract }),
-      raffleAbi.winner({ contract: raffleContract }),
-      raffleAbi.prizeDistributed({ contract: raffleContract }),
-      raffleAbi.lastRequestId({ contract: raffleContract }),
-    ]);
-
-    const tokenContract = getContract({
-      client,
-      chain,
-      address: token,
+    // Fetch from our cached API route instead of making direct RPC calls
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    
+    const response = await fetch(`${baseUrl}/api/raffles/${address}`, {
+      cache: 'no-store', // Ensure fresh data on server-side
     });
 
-    const [tokenDecimals, balance] = await Promise.all([
-      decimals({
-        contract: tokenContract,
-      }),
-      balanceOf({
-        contract: tokenContract,
-        address: address,
-      }),
-    ]);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch raffle: ${response.statusText}`);
+    }
 
+    const { raffle } = await response.json();
+
+    // The API returns all fields we need now
     const raffleData: RaffleData = {
-      owner: owner as `0x${string}`,
-      token: token as `0x${string}`,
-      tokenDecimals,
-      winner: winner as `0x${string}`,
-      prizeDistributed,
-      balance: balance.toString(),
-      lastRequestId,
+      owner: raffle.raffleOwner as `0x${string}`,
+      token: raffle.raffleToken as `0x${string}`,
+      tokenDecimals: raffle.tokenDecimals,
+      winner: raffle.raffleWinner as `0x${string}`,
+      prizeDistributed: raffle.prizeDistributed,
+      balance: raffle.balance,
+      lastRequestId: BigInt(raffle.lastRequestId || 0), // Convert string to bigint
     };
 
     return <RaffleManagement address={address} initialRaffleData={raffleData} />;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton } from "thirdweb/react";
 import { getContract, toTokens, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
@@ -66,51 +66,6 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
       lastRequestId: requestId,
     }));
   };
-
-  useEffect(() => {
-    // on mount, fetch the raffle data on the client side to make sure it's up to date
-    const fetchRaffleData = async () => {
-      const raffleContract = getContract({
-        client,
-        chain,
-        address,
-      });
-
-      const [owner, token, winner, prizeDistributed, lastRequestId] = await Promise.all([
-        raffleAbi.owner({ contract: raffleContract }),
-        raffleAbi.token({ contract: raffleContract }),
-        raffleAbi.winner({ contract: raffleContract }),
-        raffleAbi.prizeDistributed({ contract: raffleContract }),
-        raffleAbi.lastRequestId({ contract: raffleContract }),
-      ]);
-
-      const tokenContract = getContract({
-        client,
-        chain,
-        address: token,
-      });
-
-      const [tokenDecimals, balance] = await Promise.all([
-        decimals({
-          contract: tokenContract,
-        }),
-        balanceOf({
-        contract: tokenContract,
-        address: address,
-      })]);
-
-      setRaffleData({
-        owner: owner as `0x${string}`,
-        token: token as `0x${string}`,
-        winner: winner as `0x${string}`,
-        prizeDistributed: prizeDistributed as boolean,
-        tokenDecimals: Number(tokenDecimals),
-        balance: balance.toString(),
-        lastRequestId,
-      });
-    }
-    fetchRaffleData();
-  }, [address])
 
   const isOwner = account?.address === raffleData.owner;
   const hasWinner = raffleData.winner !== ZERO_ADDRESS;
