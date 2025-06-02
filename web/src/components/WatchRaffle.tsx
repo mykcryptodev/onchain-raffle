@@ -84,7 +84,7 @@ export function WatchRaffle({
                   await fetch('/api/cache/invalidate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keys: [`raffle:${raffleAddress}`] }),
+                    body: JSON.stringify({ address: raffleAddress }),
                   });
                   console.log('Invalidated cache for raffle after winner selection');
                 } catch (error) {
@@ -126,7 +126,7 @@ export function WatchRaffle({
                   await fetch('/api/cache/invalidate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keys: [`raffle:${raffleAddress}`] }),
+                    body: JSON.stringify({ address: raffleAddress }),
                   });
                   console.log('Invalidated cache for raffle after prize distribution');
                 } catch (error) {

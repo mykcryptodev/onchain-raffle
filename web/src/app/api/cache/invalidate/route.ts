@@ -1,43 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { redisCache } from "@/lib/redis";
+import { isAddress } from "thirdweb";
 
 export const dynamic = 'force-dynamic';
 
 // This route can be called to invalidate cache when needed
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { pattern, keys } = body;
+    const { address } = body;
 
-    if (pattern) {
-      // Invalidate by pattern (e.g., "raffles:*")
-      await redisCache.invalidatePattern(pattern);
-      console.log(`Invalidated cache pattern: ${pattern}`);
-      return NextResponse.json({ success: true, pattern });
+    if (!address || !isAddress(address)) {
+      return NextResponse.json(
+        { error: "Invalid raffle address" },
+        { status: 400 }
+      );
     }
 
-    if (keys && Array.isArray(keys)) {
-      // Invalidate specific keys
-      for (const key of keys) {
-        await redisCache.del(key);
-      }
-      console.log(`Invalidated cache keys: ${keys.join(', ')}`);
-      return NextResponse.json({ success: true, keys });
-    }
+    const cacheKey = `raffle:${address}`;
+    
+    // Delete the cache entry
+    await redisCache.del(cacheKey);
+    console.log(`Invalidated cache for raffle ${address}`);
 
-    // Default: only invalidate the raffles list cache
-    // Individual raffle caches are either:
-    // - Permanent (if completed/prizeDistributed)
-    // - Will expire naturally with TTL (if active)
-    await redisCache.del('raffles:all');
-    
-    // Also invalidate token metadata cache as it might be stale
-    await redisCache.invalidatePattern('token:metadata:*');
-    
-    console.log('Invalidated raffles list and token metadata cache');
-    return NextResponse.json({ success: true, message: 'Raffles list cache invalidated' });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error invalidating cache:', error);
-    return NextResponse.json({ error: 'Failed to invalidate cache' }, { status: 500 });
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json(
+      { error: "Failed to invalidate cache" },
+      { status: 500 }
+    );
   }
 } 
