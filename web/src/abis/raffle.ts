@@ -362,6 +362,41 @@ export async function estimateRequestPriceWithDefaultGas(
 
 
 /**
+ * Calls the "finalPrizeAmount" function on the contract.
+ * @param options - The options for the finalPrizeAmount function.
+ * @returns The parsed result of the function call.
+ * @example
+ * ```
+ * import { finalPrizeAmount } from "TODO";
+ *
+ * const result = await finalPrizeAmount();
+ *
+ * ```
+ */
+export async function finalPrizeAmount(
+  options: BaseTransactionOptions
+) {
+  return readContract({
+    contract: options.contract,
+    method: [
+  "0x4e022635",
+  [],
+  [
+    {
+      "internalType": "uint256",
+      "name": "",
+      "type": "uint256"
+    }
+  ]
+],
+    params: []
+  });
+};
+
+
+
+
+/**
  * Calls the "getBalance" function on the contract.
  * @param options - The options for the getBalance function.
  * @returns The parsed result of the function call.
@@ -456,6 +491,66 @@ export async function getLinkToken(
       "internalType": "contract LinkTokenInterface",
       "name": "",
       "type": "address"
+    }
+  ]
+],
+    params: []
+  });
+};
+
+
+
+
+/**
+ * Calls the "getRaffleInfo" function on the contract.
+ * @param options - The options for the getRaffleInfo function.
+ * @returns The parsed result of the function call.
+ * @example
+ * ```
+ * import { getRaffleInfo } from "TODO";
+ *
+ * const result = await getRaffleInfo();
+ *
+ * ```
+ */
+export async function getRaffleInfo(
+  options: BaseTransactionOptions
+) {
+  return readContract({
+    contract: options.contract,
+    method: [
+  "0x8166f6b2",
+  [],
+  [
+    {
+      "internalType": "address",
+      "name": "raffleOwner",
+      "type": "address"
+    },
+    {
+      "internalType": "address",
+      "name": "prizeToken",
+      "type": "address"
+    },
+    {
+      "internalType": "address",
+      "name": "raffleWinner",
+      "type": "address"
+    },
+    {
+      "internalType": "bool",
+      "name": "isPrizeDistributed",
+      "type": "bool"
+    },
+    {
+      "internalType": "uint256",
+      "name": "requestId",
+      "type": "uint256"
+    },
+    {
+      "internalType": "uint256",
+      "name": "prizeAmount",
+      "type": "uint256"
     }
   ]
 ],

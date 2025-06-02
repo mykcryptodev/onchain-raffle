@@ -6,6 +6,7 @@ export interface RaffleData {
   prizeDistributed: boolean;
   balance: string;
   lastRequestId: bigint;
+  finalPrizeAmount: string;
 }
 
 export interface RaffleCardData {
@@ -14,4 +15,7 @@ export interface RaffleCardData {
   raffleToken: `0x${string}`;
   raffleWinner: `0x${string}`;
   prizeDistributed: boolean;
+  finalPrizeAmount: string;
+  balance: string;
+  tokenDecimals: number;
 } 

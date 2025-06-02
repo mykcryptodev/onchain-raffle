@@ -40,6 +40,9 @@ export function RaffleListClient() {
               raffleToken={raffle.raffleToken}
               raffleWinner={raffle.raffleWinner}
               prizeDistributed={raffle.prizeDistributed}
+              finalPrizeAmount={raffle.finalPrizeAmount}
+              balance={raffle.balance}
+              tokenDecimals={raffle.tokenDecimals}
             />
           ))}
         </div>

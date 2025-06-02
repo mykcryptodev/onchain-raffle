@@ -1,11 +1,12 @@
 import { getRaffles } from "@/abis/factory";
-import { owner, token, winner, prizeDistributed } from "@/abis/raffle";
+import { getRaffleInfo } from "@/abis/raffle";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { factoryContract } from "@/constants/contracts";
 import { getContract } from "thirdweb";
 import { RaffleCard } from "./RaffleCard";
 import { RaffleCardData } from "@/types/raffle";
+import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 
 export async function RaffleList() {
   const raffleAddresses = await getRaffles({
@@ -23,18 +24,31 @@ export async function RaffleList() {
         client,
       });
 
-      const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed] = await Promise.all([
-        owner({
-          contract: raffleContract,
-        }),
-        token({
-          contract: raffleContract,
-        }),
-        winner({
-          contract: raffleContract,
-        }),
-        prizeDistributed({
-          contract: raffleContract,
+      // Get all raffle info in one call
+      const raffleInfo = await getRaffleInfo({ contract: raffleContract });
+
+      // Destructure the response
+      const [
+        raffleOwner,
+        raffleToken,
+        raffleWinner,
+        isPrizeDistributed,
+        lastRequestId,
+        finalPrizeAmount
+      ] = raffleInfo;
+
+      // Get token contract for balance and decimals
+      const tokenContract = getContract({
+        chain,
+        address: raffleToken,
+        client,
+      });
+
+      const [tokenDecimals, raffleBalance] = await Promise.all([
+        decimals({ contract: tokenContract }),
+        balanceOf({ 
+          contract: tokenContract,
+          address: raffleAddress as `0x${string}`,
         }),
       ]);
 
@@ -43,7 +57,10 @@ export async function RaffleList() {
         raffleOwner: raffleOwner as `0x${string}`,
         raffleToken: raffleToken as `0x${string}`,
         raffleWinner: raffleWinner as `0x${string}`,
-        prizeDistributed: rafflePrizeDistributed,
+        prizeDistributed: isPrizeDistributed,
+        finalPrizeAmount: finalPrizeAmount.toString(),
+        balance: raffleBalance.toString(),
+        tokenDecimals,
       };
     })
   );
@@ -62,6 +79,9 @@ export async function RaffleList() {
               raffleToken={raffle.raffleToken}
               raffleWinner={raffle.raffleWinner}
               prizeDistributed={raffle.prizeDistributed}
+              finalPrizeAmount={raffle.finalPrizeAmount}
+              balance={raffle.balance}
+              tokenDecimals={raffle.tokenDecimals}
             />
           ))}
         </div>

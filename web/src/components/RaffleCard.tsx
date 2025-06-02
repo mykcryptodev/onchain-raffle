@@ -1,20 +1,30 @@
 import { AccountAvatar, AccountName, AccountProvider, TokenIcon, TokenName, TokenProvider, TokenSymbol } from "thirdweb/react";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
-import { ZERO_ADDRESS } from "thirdweb";
+import { ZERO_ADDRESS, toTokens } from "thirdweb";
 import Link from "next/link";
 import AccountAvatarFallback from "./fallbacks/AccountAvatar";
 import AccountNameFallback from "./fallbacks/AccountName";
 import { TokenIconFallback } from "./fallbacks/TokenIcon";
 import { RaffleCardData } from "@/types/raffle";
 import { shortenAddress } from "thirdweb/utils";
+import { formatCompactNumber } from "@/utils/formatAmount";
 
 type RaffleCardProps = Omit<RaffleCardData, 'raffleAddress'> & {
   raffleAddress: string;
 };
 
-export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinner, prizeDistributed }: RaffleCardProps) {
+export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinner, prizeDistributed, finalPrizeAmount, balance, tokenDecimals }: RaffleCardProps) {
   const hasWinner = raffleWinner !== ZERO_ADDRESS;
+  const balanceAsBigInt = BigInt(balance);
+  const finalPrizeAmountAsBigInt = BigInt(finalPrizeAmount);
+  // Use finalPrizeAmount if balance is 0 and prize was distributed
+  const displayAmount = balanceAsBigInt === 0n && prizeDistributed && finalPrizeAmountAsBigInt > 0n
+    ? toTokens(finalPrizeAmountAsBigInt, tokenDecimals)
+    : toTokens(balanceAsBigInt, tokenDecimals);
+  
+  // Format the amount for display
+  const formattedAmount = formatCompactNumber(displayAmount);
   
   return (
     <div className="p-6 border border-zinc-800 rounded-lg hover:bg-zinc-900 transition-colors">
@@ -55,8 +65,9 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
                   <TokenName className="font-medium text-base truncate" />
                   <TokenSymbol className="text-sm text-zinc-400 flex-shrink-0" />
                 </div>
-                <span className="text-xs text-zinc-500 font-mono">
-                  {raffleToken.slice(0, 6)}...{raffleToken.slice(-4)}
+                <span className="text-xs text-zinc-400">
+                  {prizeDistributed && balanceAsBigInt === 0n ? "Prize Distributed: " : "Prize Pool: "}
+                  {formattedAmount}
                 </span>
               </div>
             </div>
