@@ -362,6 +362,41 @@ export async function estimateRequestPriceWithDefaultGas(
 
 
 /**
+ * Calls the "finalPrizeAmount" function on the contract.
+ * @param options - The options for the finalPrizeAmount function.
+ * @returns The parsed result of the function call.
+ * @example
+ * ```
+ * import { finalPrizeAmount } from "TODO";
+ *
+ * const result = await finalPrizeAmount();
+ *
+ * ```
+ */
+export async function finalPrizeAmount(
+  options: BaseTransactionOptions
+) {
+  return readContract({
+    contract: options.contract,
+    method: [
+  "0x4e022635",
+  [],
+  [
+    {
+      "internalType": "uint256",
+      "name": "",
+      "type": "uint256"
+    }
+  ]
+],
+    params: []
+  });
+};
+
+
+
+
+/**
  * Calls the "getBalance" function on the contract.
  * @param options - The options for the getBalance function.
  * @returns The parsed result of the function call.

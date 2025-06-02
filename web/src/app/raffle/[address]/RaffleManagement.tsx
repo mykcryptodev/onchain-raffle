@@ -16,6 +16,7 @@ import { RaffleData } from "@/types/raffle";
 import { WatchRaffle } from "@/components/WatchRaffle";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { shortenAddress } from "thirdweb/utils";
+import { formatCompactNumber } from "@/utils/formatAmount";
 
 interface RaffleManagementProps {
   address: `0x${string}`;
@@ -55,6 +56,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
     setRaffleData(prev => ({
       ...prev,
       prizeDistributed: true,
+      finalPrizeAmount: prev.balance, // Set finalPrizeAmount to the balance that was distributed
       balance: "0", // Prize has been distributed, balance is now 0
     }));
   };
@@ -77,6 +79,19 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const hasWinner = raffleData.winner !== ZERO_ADDRESS;
   const isSelectingWinner = raffleData.lastRequestId > 0n && !hasWinner;
   const balanceAsBigInt = BigInt(raffleData.balance);
+  const finalPrizeAmountAsBigInt = BigInt(raffleData.finalPrizeAmount);
+  
+  // Use finalPrizeAmount if balance is 0 and prize was distributed
+  const displayAmount = balanceAsBigInt === 0n && raffleData.prizeDistributed && finalPrizeAmountAsBigInt > 0n
+    ? toTokens(finalPrizeAmountAsBigInt, raffleData.tokenDecimals)
+    : toTokens(balanceAsBigInt, raffleData.tokenDecimals);
+  
+  const amountLabel = balanceAsBigInt === 0n && raffleData.prizeDistributed && finalPrizeAmountAsBigInt > 0n
+    ? "Prize Distributed"
+    : "Prize Pool";
+  
+  // Format the amount for display
+  const formattedAmount = formatCompactNumber(displayAmount);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -132,7 +147,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                   <TokenSymbol className="text-sm text-zinc-400 flex-shrink-0" />
                 </div>
                 <p className="text-xs text-zinc-500 truncate">
-                  Prize Pool: {toTokens(BigInt(raffleData.balance), raffleData.tokenDecimals)}
+                  {amountLabel}: {formattedAmount}
                 </p>
               </div>
             </div>
@@ -141,7 +156,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
 
         {/* Owner */}
         <div className="border border-zinc-800 rounded-lg p-6 min-w-0">
-          <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Owner</p>
+          <p className="text-sm text-zinc-400 uppercase tracking-wide mb-3">Created by</p>
           <AccountProvider address={raffleData.owner} client={client}>
             <div className="flex items-center gap-3 min-w-0">
               <AccountAvatar 
@@ -156,7 +171,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                   className="font-medium truncate block" 
                 />
                 <p className="text-xs text-zinc-500">
-                  {isOwner ? "You are the owner" : shortenAddress(raffleData.owner)}
+                  {isOwner ? "You are the creator" : shortenAddress(raffleData.owner)}
                 </p>
               </div>
             </div>
@@ -269,7 +284,12 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
             winner={raffleData.winner}
             prizeDistributed={raffleData.prizeDistributed}
             onSuccess={() => {
-              setRaffleData({ ...raffleData, prizeDistributed: true });
+              setRaffleData(prev => ({ 
+                ...prev, 
+                prizeDistributed: true,
+                finalPrizeAmount: prev.balance, // Set finalPrizeAmount to the balance that was distributed
+                balance: "0" // Prize has been distributed, balance is now 0
+              }));
             }}
           />
 

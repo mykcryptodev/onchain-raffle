@@ -4,7 +4,7 @@ import { RaffleData } from "@/types/raffle";
 import { getContract } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
-import { owner, token, winner, prizeDistributed, lastRequestId } from "@/abis/raffle";
+import { owner, token, winner, prizeDistributed, lastRequestId, finalPrizeAmount } from "@/abis/raffle";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { redisCache } from "@/lib/redis";
 
@@ -50,6 +50,7 @@ export default async function RafflePage({ params }: PageProps) {
         prizeDistributed: cached.prizeDistributed,
         balance: cached.balance,
         lastRequestId: BigInt(cached.lastRequestId || 0),
+        finalPrizeAmount: cached.finalPrizeAmount || "0",
       };
       return <RaffleManagement address={address} initialRaffleData={raffleData} />;
     }
@@ -70,6 +71,14 @@ export default async function RafflePage({ params }: PageProps) {
       prizeDistributed({ contract: raffleContract }),
       lastRequestId({ contract: raffleContract }),
     ]);
+
+    // Try to get finalPrizeAmount, but default to "0" if the function doesn't exist (older contracts)
+    let raffleFinalPrizeAmount = BigInt(0);
+    try {
+      raffleFinalPrizeAmount = await finalPrizeAmount({ contract: raffleContract });
+    } catch (error) {
+      console.log(`Contract ${address} doesn't have finalPrizeAmount, defaulting to 0`);
+    }
 
     // Get token contract for additional data
     const tokenContract = getContract({
@@ -94,6 +103,7 @@ export default async function RafflePage({ params }: PageProps) {
       prizeDistributed: rafflePrizeDistributed,
       balance: raffleBalance.toString(),
       lastRequestId: raffleLastRequestId,
+      finalPrizeAmount: raffleFinalPrizeAmount.toString(),
     };
     
     // Cache the result
@@ -106,6 +116,7 @@ export default async function RafflePage({ params }: PageProps) {
       lastRequestId: raffleLastRequestId.toString(),
       tokenDecimals,
       balance: raffleBalance.toString(),
+      finalPrizeAmount: raffleFinalPrizeAmount.toString(),
     };
     
     if (rafflePrizeDistributed) {

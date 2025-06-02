@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRaffles } from "@/abis/factory";
-import { owner, token, winner, prizeDistributed, lastRequestId } from "@/abis/raffle";
+import { owner, token, winner, prizeDistributed, lastRequestId, finalPrizeAmount } from "@/abis/raffle";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { factoryContract } from "@/constants/contracts";
@@ -26,6 +26,7 @@ interface Raffle {
   lastRequestId?: bigint | string; // bigint when fresh, string when cached/serialized
   tokenDecimals?: number;
   balance?: string;
+  finalPrizeAmount?: string;
 }
 
 export async function GET() {
@@ -106,12 +107,13 @@ export async function GET() {
               client,
             });
 
-            const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId] = await Promise.all([
+            const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId, raffleFinalPrizeAmount] = await Promise.all([
               owner({ contract: raffleContract }),
               token({ contract: raffleContract }),
               winner({ contract: raffleContract }),
               prizeDistributed({ contract: raffleContract }),
               lastRequestId({ contract: raffleContract }),
+              finalPrizeAmount({ contract: raffleContract }),
             ]);
 
             // Get token info for complete data
@@ -138,6 +140,7 @@ export async function GET() {
               lastRequestId: raffleLastRequestId,
               tokenDecimals,
               balance: raffleBalance.toString(),
+              finalPrizeAmount: raffleFinalPrizeAmount.toString(),
             };
 
             // Cache individual raffle with bigint serialized

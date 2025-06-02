@@ -1,11 +1,12 @@
 import { getRaffles } from "@/abis/factory";
-import { owner, token, winner, prizeDistributed } from "@/abis/raffle";
+import { owner, token, winner, prizeDistributed, finalPrizeAmount } from "@/abis/raffle";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { factoryContract } from "@/constants/contracts";
 import { getContract } from "thirdweb";
 import { RaffleCard } from "./RaffleCard";
 import { RaffleCardData } from "@/types/raffle";
+import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 
 export async function RaffleList() {
   const raffleAddresses = await getRaffles({
@@ -23,7 +24,7 @@ export async function RaffleList() {
         client,
       });
 
-      const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed] = await Promise.all([
+      const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleFinalPrizeAmount] = await Promise.all([
         owner({
           contract: raffleContract,
         }),
@@ -36,6 +37,24 @@ export async function RaffleList() {
         prizeDistributed({
           contract: raffleContract,
         }),
+        finalPrizeAmount({
+          contract: raffleContract,
+        }),
+      ]);
+
+      // Get token contract for balance and decimals
+      const tokenContract = getContract({
+        chain,
+        address: raffleToken,
+        client,
+      });
+
+      const [tokenDecimals, raffleBalance] = await Promise.all([
+        decimals({ contract: tokenContract }),
+        balanceOf({ 
+          contract: tokenContract,
+          address: raffleAddress as `0x${string}`,
+        }),
       ]);
 
       return {
@@ -44,6 +63,9 @@ export async function RaffleList() {
         raffleToken: raffleToken as `0x${string}`,
         raffleWinner: raffleWinner as `0x${string}`,
         prizeDistributed: rafflePrizeDistributed,
+        finalPrizeAmount: raffleFinalPrizeAmount.toString(),
+        balance: raffleBalance.toString(),
+        tokenDecimals,
       };
     })
   );
@@ -62,6 +84,9 @@ export async function RaffleList() {
               raffleToken={raffle.raffleToken}
               raffleWinner={raffle.raffleWinner}
               prizeDistributed={raffle.prizeDistributed}
+              finalPrizeAmount={raffle.finalPrizeAmount}
+              balance={raffle.balance}
+              tokenDecimals={raffle.tokenDecimals}
             />
           ))}
         </div>
