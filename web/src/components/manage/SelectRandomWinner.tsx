@@ -78,9 +78,22 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           onTransactionSent={() => {
             toast.loading("Requesting winner...");
           }}
-          onTransactionConfirmed={() => {
+          onTransactionConfirmed={async () => {
             toast.dismiss();
             setEligibleAddresses("");
+            
+            // Invalidate the server-side cache
+            try {
+              await fetch('/api/cache/invalidate', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ address: raffleContract.address }),
+              });
+            } catch (error) {
+              console.error("Failed to invalidate cache:", error);
+            }
           }}
           onError={(error) => {
             console.error("Error requesting winner:", error);

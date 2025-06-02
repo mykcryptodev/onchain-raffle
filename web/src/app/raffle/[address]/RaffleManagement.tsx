@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useActiveAccount, AccountAvatar, AccountName, AccountProvider, TokenProvider, TokenIcon, TokenName, TokenSymbol, ConnectButton } from "thirdweb/react";
 import { getContract, toTokens, ZERO_ADDRESS } from "thirdweb";
 import { client } from "@/constants/thirdweb";
@@ -13,8 +13,6 @@ import { FundRaffle } from "@/components/manage/FundRaffle";
 import { SelectRandomWinner } from "@/components/manage/SelectRandomWinner";
 import { DistributePrize } from "@/components/manage/DistributePrize";
 import { RaffleData } from "@/types/raffle";
-import * as raffleAbi from "@/abis/raffle";
-import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { WatchRaffle } from "@/components/WatchRaffle";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { shortenAddress } from "thirdweb/utils";
@@ -29,6 +27,14 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const { shareRaffle } = useFarcaster();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const refreshPageData = useCallback(async () => {
+    setIsRefreshing(true);
+    // Small delay to ensure cache is invalidated
+    await new Promise(resolve => setTimeout(resolve, 500));
+    window.location.reload();
+  }, []);
 
   const raffleContract = getContract({
     client,
@@ -232,6 +238,8 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                   ...prev,
                   balance: newBalance.toString()
                 }));
+                
+                refreshPageData();
               } catch (error) {
                 console.error("Error fetching new balance:", error);
               }

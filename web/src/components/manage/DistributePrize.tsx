@@ -42,8 +42,22 @@ export const DistributePrize: FC<DistributePrizeProps> = ({
           onTransactionSent={() => {
             toast.loading("Distributing prize...");
           }}
-          onTransactionConfirmed={() => {
+          onTransactionConfirmed={async () => {
             toast.dismiss();
+            
+            // Invalidate the server-side cache
+            try {
+              await fetch('/api/cache/invalidate', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ address: raffleContract.address }),
+              });
+            } catch (error) {
+              console.error("Failed to invalidate cache:", error);
+            }
+            
             onSuccess?.();
             console.log("Prize distributed successfully!");
           }}

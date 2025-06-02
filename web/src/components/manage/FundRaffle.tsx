@@ -111,9 +111,23 @@ export const FundRaffle: FC<FundRaffleProps> = ({ raffleContract, tokenAddress, 
               console.log("transaction sent");
               toast.loading("Funding...");
             }}
-            onTransactionConfirmed={() => {
+            onTransactionConfirmed={async () => {
               console.log("transaction confirmed");
               toast.dismiss();
+              
+              // Invalidate the server-side cache
+              try {
+                await fetch('/api/cache/invalidate', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ address: raffleContract.address }),
+                });
+              } catch (error) {
+                console.error("Failed to invalidate cache:", error);
+              }
+              
               onFunded();
             }}
             className="w-full sm:w-auto"
