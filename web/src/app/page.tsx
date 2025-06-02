@@ -2,7 +2,7 @@ import Image from "next/image";
 import { ConnectButton } from "thirdweb/react";
 import logo from "@public/logo.png";
 import { client } from "@/constants/thirdweb";
-import { RaffleList } from "@/components/RaffleList";
+import { RaffleListPaginated } from "@/components/RaffleListPaginated";
 import { Suspense } from "react";
 import { RaffleListLoading } from "@/components/RaffleListLoading";
 import { chain } from "@/constants/chain";
@@ -30,7 +30,7 @@ export default function Home() {
           <RaffleHeader />
           
           <Suspense fallback={<RaffleListLoading />}>
-            <RaffleList />
+            <RaffleListPaginated />
           </Suspense>
         </div>
       </div>

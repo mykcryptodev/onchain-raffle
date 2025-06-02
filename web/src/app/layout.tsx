@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import { ToastProvider } from "@/components/ToastProvider";
 import { FarcasterProvider } from "@/components/FarcasterProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Rofl House",
@@ -37,10 +38,12 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThirdwebProvider>
-          <FarcasterProvider>
-            {children}
-            <ToastProvider />
-          </FarcasterProvider>
+          <QueryProvider>
+            <FarcasterProvider>
+              {children}
+              <ToastProvider />
+            </FarcasterProvider>
+          </QueryProvider>
         </ThirdwebProvider>
       </body>
     </html>
