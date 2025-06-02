@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { owner, token, winner, prizeDistributed, lastRequestId } from "@/abis/raffle";
+import { getRaffleInfo } from "@/abis/raffle";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { getContract } from "thirdweb";
@@ -27,6 +27,7 @@ interface RaffleData {
   lastRequestId: bigint | string; // bigint when fresh, string when cached/serialized
   tokenDecimals: number;
   balance: string;
+  finalPrizeAmount: string;
 }
 
 export async function GET(request: Request, { params }: Params) {
@@ -118,13 +119,18 @@ export async function GET(request: Request, { params }: Params) {
         client,
       });
 
-      const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId] = await Promise.all([
-        owner({ contract: raffleContract }),
-        token({ contract: raffleContract }),
-        winner({ contract: raffleContract }),
-        prizeDistributed({ contract: raffleContract }),
-        lastRequestId({ contract: raffleContract }),
-      ]);
+      // Get all raffle info in one call
+      const raffleInfo = await getRaffleInfo({ contract: raffleContract });
+
+      // Destructure the response
+      const [
+        raffleOwner,
+        raffleToken,
+        raffleWinner,
+        isPrizeDistributed,
+        lastRequestId,
+        finalPrizeAmount
+      ] = raffleInfo;
 
       // Get token contract for additional data
       const tokenContract = getContract({
@@ -146,10 +152,11 @@ export async function GET(request: Request, { params }: Params) {
         raffleOwner,
         raffleToken,
         raffleWinner,
-        prizeDistributed: rafflePrizeDistributed,
-        lastRequestId: raffleLastRequestId,
+        prizeDistributed: isPrizeDistributed,
+        lastRequestId: lastRequestId,
         tokenDecimals,
         balance: raffleBalance.toString(),
+        finalPrizeAmount: finalPrizeAmount.toString(),
       };
 
       // Serialize bigint for storage
@@ -161,7 +168,7 @@ export async function GET(request: Request, { params }: Params) {
       // Cache the result in Redis
       // If the raffle is complete (prize distributed), store permanently
       // Otherwise, use TTL for active raffles
-      if (rafflePrizeDistributed) {
+      if (isPrizeDistributed) {
         // Completed raffle - store permanently (no TTL)
         await redisCache.set(cacheKey, serializableRaffle);
         console.log(`Cached completed raffle ${address} in Redis permanently`);

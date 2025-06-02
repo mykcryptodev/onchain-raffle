@@ -4,6 +4,6 @@ import { chain } from "./chain";
 
 export const factoryContract = getContract({
   chain,
-  address: "0x5620C9097c02Ad5dB52D8a416D8ec620adDedEdD",
+  address: "0xb252e9d64820285b7ce0a926b9fe9e69f239f27b",
   client,
 });

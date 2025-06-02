@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRaffles } from "@/abis/factory";
-import { owner, token, winner, prizeDistributed, lastRequestId, finalPrizeAmount } from "@/abis/raffle";
+import { getRaffleInfo } from "@/abis/raffle";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { factoryContract } from "@/constants/contracts";
@@ -107,14 +107,18 @@ export async function GET() {
               client,
             });
 
-            const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId, raffleFinalPrizeAmount] = await Promise.all([
-              owner({ contract: raffleContract }),
-              token({ contract: raffleContract }),
-              winner({ contract: raffleContract }),
-              prizeDistributed({ contract: raffleContract }),
-              lastRequestId({ contract: raffleContract }),
-              finalPrizeAmount({ contract: raffleContract }),
-            ]);
+            // Get all raffle info in one call
+            const raffleInfo = await getRaffleInfo({ contract: raffleContract });
+
+            // Destructure the response
+            const [
+              raffleOwner,
+              raffleToken,
+              raffleWinner,
+              isPrizeDistributed,
+              lastRequestId,
+              finalPrizeAmount
+            ] = raffleInfo;
 
             // Get token info for complete data
             const tokenContract = getContract({
@@ -136,11 +140,11 @@ export async function GET() {
               raffleOwner,
               raffleToken,
               raffleWinner,
-              prizeDistributed: rafflePrizeDistributed,
-              lastRequestId: raffleLastRequestId,
+              prizeDistributed: isPrizeDistributed,
+              lastRequestId: lastRequestId,
               tokenDecimals,
               balance: raffleBalance.toString(),
-              finalPrizeAmount: raffleFinalPrizeAmount.toString(),
+              finalPrizeAmount: finalPrizeAmount.toString(),
             };
 
             // Cache individual raffle with bigint serialized
@@ -150,7 +154,7 @@ export async function GET() {
               lastRequestId: raffle.lastRequestId?.toString(),
             };
 
-            if (rafflePrizeDistributed) {
+            if (isPrizeDistributed) {
               // Completed raffle - store permanently
               await redisCache.set(cacheKey, serializableRaffle);
               console.log(`Cached completed raffle ${raffleAddress} permanently`);

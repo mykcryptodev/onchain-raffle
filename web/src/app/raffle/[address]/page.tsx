@@ -4,7 +4,7 @@ import { RaffleData } from "@/types/raffle";
 import { getContract } from "thirdweb";
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
-import { owner, token, winner, prizeDistributed, lastRequestId, finalPrizeAmount } from "@/abis/raffle";
+import { getRaffleInfo } from "@/abis/raffle";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 import { redisCache } from "@/lib/redis";
 
@@ -64,21 +64,18 @@ export default async function RafflePage({ params }: PageProps) {
       client,
     });
 
-    const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId] = await Promise.all([
-      owner({ contract: raffleContract }),
-      token({ contract: raffleContract }),
-      winner({ contract: raffleContract }),
-      prizeDistributed({ contract: raffleContract }),
-      lastRequestId({ contract: raffleContract }),
-    ]);
+    // Get all raffle info in one call
+    const raffleInfo = await getRaffleInfo({ contract: raffleContract });
 
-    // Try to get finalPrizeAmount, but default to "0" if the function doesn't exist (older contracts)
-    let raffleFinalPrizeAmount = BigInt(0);
-    try {
-      raffleFinalPrizeAmount = await finalPrizeAmount({ contract: raffleContract });
-    } catch (error) {
-      console.log(`Contract ${address} doesn't have finalPrizeAmount, defaulting to 0`);
-    }
+    // Destructure the response
+    const [
+      raffleOwner,
+      raffleToken,
+      raffleWinner,
+      isPrizeDistributed,
+      lastRequestId,
+      finalPrizeAmount
+    ] = raffleInfo;
 
     // Get token contract for additional data
     const tokenContract = getContract({
@@ -100,10 +97,10 @@ export default async function RafflePage({ params }: PageProps) {
       token: raffleToken as `0x${string}`,
       tokenDecimals,
       winner: raffleWinner as `0x${string}`,
-      prizeDistributed: rafflePrizeDistributed,
+      prizeDistributed: isPrizeDistributed,
       balance: raffleBalance.toString(),
-      lastRequestId: raffleLastRequestId,
-      finalPrizeAmount: raffleFinalPrizeAmount.toString(),
+      lastRequestId: lastRequestId,
+      finalPrizeAmount: finalPrizeAmount.toString(),
     };
     
     // Cache the result
@@ -112,14 +109,14 @@ export default async function RafflePage({ params }: PageProps) {
       raffleOwner,
       raffleToken,
       raffleWinner,
-      prizeDistributed: rafflePrizeDistributed,
-      lastRequestId: raffleLastRequestId.toString(),
+      prizeDistributed: isPrizeDistributed,
+      lastRequestId: lastRequestId.toString(),
       tokenDecimals,
       balance: raffleBalance.toString(),
-      finalPrizeAmount: raffleFinalPrizeAmount.toString(),
+      finalPrizeAmount: finalPrizeAmount.toString(),
     };
     
-    if (rafflePrizeDistributed) {
+    if (isPrizeDistributed) {
       // Completed raffle - store permanently
       await redisCache.set(cacheKey, serializableRaffle);
       console.log(`Cached completed raffle ${address} permanently`);

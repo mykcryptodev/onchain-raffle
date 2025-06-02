@@ -502,6 +502,66 @@ export async function getLinkToken(
 
 
 /**
+ * Calls the "getRaffleInfo" function on the contract.
+ * @param options - The options for the getRaffleInfo function.
+ * @returns The parsed result of the function call.
+ * @example
+ * ```
+ * import { getRaffleInfo } from "TODO";
+ *
+ * const result = await getRaffleInfo();
+ *
+ * ```
+ */
+export async function getRaffleInfo(
+  options: BaseTransactionOptions
+) {
+  return readContract({
+    contract: options.contract,
+    method: [
+  "0x8166f6b2",
+  [],
+  [
+    {
+      "internalType": "address",
+      "name": "raffleOwner",
+      "type": "address"
+    },
+    {
+      "internalType": "address",
+      "name": "prizeToken",
+      "type": "address"
+    },
+    {
+      "internalType": "address",
+      "name": "raffleWinner",
+      "type": "address"
+    },
+    {
+      "internalType": "bool",
+      "name": "isPrizeDistributed",
+      "type": "bool"
+    },
+    {
+      "internalType": "uint256",
+      "name": "requestId",
+      "type": "uint256"
+    },
+    {
+      "internalType": "uint256",
+      "name": "prizeAmount",
+      "type": "uint256"
+    }
+  ]
+],
+    params: []
+  });
+};
+
+
+
+
+/**
  * Calls the "getVRFWrapperAddress" function on the contract.
  * @param options - The options for the getVRFWrapperAddress function.
  * @returns The parsed result of the function call.
