@@ -1,10 +1,36 @@
 import { chain } from '@/constants/chain';
 import { client } from '@/constants/thirdweb';
+import { redisCache } from '@/lib/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { getContract, readContract } from 'thirdweb';
 
+// Function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+// Function to convert base64 to ArrayBuffer
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+// Function to generate cache key for token images
+function getTokenImageCacheKey(chainName: string, tokenAddress: string): string {
+  return `token-image:${chainName.toLowerCase()}:${tokenAddress.toLowerCase()}`;
+}
+
 // Function to try fetching image from token contract (e.g., Clanker tokens)
-async function tryFetchTokenImage(tokenAddress: string): Promise<NextResponse | null> {
+async function tryFetchTokenImage(tokenAddress: string): Promise<{ imageBuffer: ArrayBuffer; contentType: string } | null> {
   try {
     const tokenContract = getContract({
       chain,
@@ -21,12 +47,8 @@ async function tryFetchTokenImage(tokenAddress: string): Promise<NextResponse | 
       const imageResponse = await fetch(image);
       if (imageResponse.ok) {
         const imageBuffer = await imageResponse.arrayBuffer();
-        return new NextResponse(imageBuffer, {
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-          },
-        });
+        const contentType = imageResponse.headers.get('content-type') || 'image/png';
+        return { imageBuffer, contentType };
       }
     }
   } catch (error) {
@@ -48,6 +70,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Check Redis cache first
+    const cacheKey = getTokenImageCacheKey(chainName, tokenAddress);
+    const cachedData = await redisCache.get<{ image: string; contentType: string }>(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Token image cache hit for ${chainName}:${tokenAddress}`);
+      const imageBuffer = base64ToArrayBuffer(cachedData.image);
+      return new NextResponse(imageBuffer, {
+        headers: {
+          'Content-Type': cachedData.contentType,
+          'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache since images are permanent
+        },
+      });
+    }
+
+    console.log(`Token image cache miss for ${chainName}:${tokenAddress}`);
+
     // Make request to CoinGecko API
     const coingeckoUrl = `https://api.coingecko.com/api/v3/coins/${chainName.toLowerCase()}/contract/${tokenAddress}`;
     
@@ -55,15 +94,28 @@ export async function GET(request: NextRequest) {
       headers: {
         'Accept': 'application/json',
       },
-      // Cache for 1 hour
-      next: { revalidate: 3600 }
     });
 
     if (!res.ok) {      
       // Try fetching from token contract before returning 404
       const tokenImage = await tryFetchTokenImage(tokenAddress);
       if (tokenImage) {
-        return tokenImage;
+        // Extract the image data and store in Redis
+        const imageData = tokenImage.imageBuffer;
+        const contentType = tokenImage.contentType;
+        
+        // Store in Redis permanently
+        await redisCache.set(cacheKey, {
+          image: arrayBufferToBase64(imageData),
+          contentType: contentType,
+        });
+        
+        return new NextResponse(imageData, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        });
       }
       return new NextResponse(null, { status: 404 });
     }
@@ -75,7 +127,22 @@ export async function GET(request: NextRequest) {
       // Try fetching from token contract before returning 404
       const tokenImage = await tryFetchTokenImage(tokenAddress);
       if (tokenImage) {
-        return tokenImage;
+        // Extract the image data and store in Redis
+        const imageData = tokenImage.imageBuffer;
+        const contentType = tokenImage.contentType;
+        
+        // Store in Redis permanently
+        await redisCache.set(cacheKey, {
+          image: arrayBufferToBase64(imageData),
+          contentType: contentType,
+        });
+        
+        return new NextResponse(imageData, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        });
       }
       return new NextResponse(null, { status: 404 });
     }
@@ -87,7 +154,22 @@ export async function GET(request: NextRequest) {
       // Try fetching from token contract before returning 404
       const tokenImage = await tryFetchTokenImage(tokenAddress);
       if (tokenImage) {
-        return tokenImage;
+        // Extract the image data and store in Redis
+        const imageData = tokenImage.imageBuffer;
+        const contentType = tokenImage.contentType;
+        
+        // Store in Redis permanently
+        await redisCache.set(cacheKey, {
+          image: arrayBufferToBase64(imageData),
+          contentType: contentType,
+        });
+        
+        return new NextResponse(imageData, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        });
       }
       return new NextResponse(null, { status: 404 });
     }
@@ -98,10 +180,16 @@ export async function GET(request: NextRequest) {
     // Return the image with proper headers
     const imageBuffer = await imageResponse.arrayBuffer();
     
+    // Store in Redis permanently
+    await redisCache.set(cacheKey, {
+      image: arrayBufferToBase64(imageBuffer),
+      contentType: contentType,
+    });
+    
     return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache since images are permanent
       },
     });
 
