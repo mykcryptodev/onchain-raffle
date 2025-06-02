@@ -46,7 +46,7 @@ export function WatchRaffle({
         
         if (!isMounted) return;
         
-        // Watch for the events
+        // Watch for the events with reduced polling frequency
         unwatch = watchContractEvents({
           contract: raffleContract,
           events: [
@@ -70,30 +70,44 @@ export function WatchRaffle({
               // Mark this event as processed
               processedEvents.current.add(eventId);
               console.log(`Processing ${event.eventName} event:`, eventId);
-              
-              if (event.eventName === "RandomRequested") {
-                const args = event.args as { requestId: bigint; requestPrice: bigint };
-                const requestId = args.requestId;
-                console.log("Random winner requested, request ID:", requestId);
-                
-                // Update the parent component
-                onRandomRequested?.(requestId);
-                
-                // Show a toast notification
-                toast.loading("Random winner selection initiated...");
-              } else if (event.eventName === "WinnerSelected") {
+
+              if (event.eventName === "WinnerSelected") {
                 const args = event.args as { winner: `0x${string}` };
                 const winnerAddress = args.winner;
                 console.log("Winner selected:", winnerAddress);
                 
                 // Update the parent component
                 onWinnerSelected(winnerAddress);
-
-                toast.dismiss();
+                
+                // Invalidate Redis cache for this raffle
+                try {
+                  await fetch('/api/cache/invalidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keys: [`raffle:${raffleAddress}`] }),
+                  });
+                  console.log('Invalidated cache for raffle after winner selection');
+                } catch (error) {
+                  console.error('Failed to invalidate cache:', error);
+                }
                 
                 // Show a toast notification
-                toast.success(`Winner selected: ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}`, {
+                toast.success(`Winner selected: ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}!`, {
                   autoClose: 8000,
+                });
+              } else if (event.eventName === "RandomRequested") {
+                const args = event.args as { requestId: bigint };
+                const requestId = args.requestId;
+                console.log("Random requested with ID:", requestId);
+                
+                // Notify parent component if callback is provided
+                if (onRandomRequested) {
+                  onRandomRequested(requestId);
+                }
+                
+                // Show a toast notification
+                toast.loading("Requesting randomness from Chainlink VRF...", {
+                  autoClose: 5000,
                 });
               } else if (event.eventName === "PrizeDistributed") {
                 const args = event.args as { winner: `0x${string}`; amount: bigint };
@@ -103,6 +117,19 @@ export function WatchRaffle({
                 
                 // Update the parent component
                 onPrizeDistributed();
+                
+                // Invalidate Redis cache for this raffle
+                // Note: After this, the raffle will be cached permanently as completed
+                try {
+                  await fetch('/api/cache/invalidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keys: [`raffle:${raffleAddress}`] }),
+                  });
+                  console.log('Invalidated cache for raffle after prize distribution');
+                } catch (error) {
+                  console.error('Failed to invalidate cache:', error);
+                }
                 
                 // Show a toast notification
                 toast.success(`Prize distributed to ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}!`, {
