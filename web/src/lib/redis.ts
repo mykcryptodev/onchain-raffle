@@ -3,6 +3,10 @@ import { Redis } from '@upstash/redis';
 // Check if Redis is configured
 const isRedisConfigured = process.env.UPSTASH_URL && process.env.UPSTASH_TOKEN;
 
+if (!isRedisConfigured) {
+  console.warn('Redis not configured: Missing UPSTASH_URL or UPSTASH_TOKEN');
+}
+
 // Initialize Redis client only if configured
 export const redis = isRedisConfigured
   ? new Redis({
@@ -25,6 +29,14 @@ export const redisCache = {
       return data as T;
     } catch (error) {
       console.error('Redis get error:', error);
+      // Log more details about the error
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+        });
+      }
       return null;
     }
   },

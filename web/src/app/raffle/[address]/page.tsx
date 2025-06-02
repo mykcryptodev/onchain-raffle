@@ -1,6 +1,12 @@
 import { isAddress } from "thirdweb";
 import RaffleManagement from "./RaffleManagement";
 import { RaffleData } from "@/types/raffle";
+import { getContract } from "thirdweb";
+import { client } from "@/constants/thirdweb";
+import { chain } from "@/constants/chain";
+import { owner, token, winner, prizeDistributed, lastRequestId } from "@/abis/raffle";
+import { balanceOf, decimals } from "thirdweb/extensions/erc20";
+import { redisCache } from "@/lib/redis";
 
 // Force dynamic rendering to prevent 404s during cold starts
 export const dynamic = 'force-dynamic';
@@ -30,57 +36,89 @@ export default async function RafflePage({ params }: PageProps) {
   }
 
   try {
-    // Fetch from our cached API route instead of making direct RPC calls
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const cacheKey = `raffle:${address}`;
     
-    // Add retry logic for rate-limited requests
-    let retries = 0;
-    const maxRetries = 3;
-    let lastError;
-    
-    while (retries < maxRetries) {
-      try {
-        const response = await fetch(`${baseUrl}/api/raffles/${address}`, {
-          cache: 'no-store', // Ensure fresh data on server-side
-        });
-
-        if (response.ok) {
-          const { raffle } = await response.json();
-
-          // The API returns all fields we need now
-          const raffleData: RaffleData = {
-            owner: raffle.raffleOwner as `0x${string}`,
-            token: raffle.raffleToken as `0x${string}`,
-            tokenDecimals: raffle.tokenDecimals,
-            winner: raffle.raffleWinner as `0x${string}`,
-            prizeDistributed: raffle.prizeDistributed,
-            balance: raffle.balance,
-            lastRequestId: BigInt(raffle.lastRequestId || 0), // Convert string to bigint
-          };
-
-          return <RaffleManagement address={address} initialRaffleData={raffleData} />;
-        }
-        
-        if (response.status === 429) {
-          // Rate limited - wait and retry
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retries + 1)));
-          retries++;
-          lastError = new Error('Rate limited');
-          continue;
-        }
-
-        throw new Error(`Failed to fetch raffle: ${response.statusText}`);
-      } catch (error) {
-        lastError = error;
-        retries++;
-        if (retries < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
+    // Try to get from Redis cache first
+    const cached = await redisCache.get(cacheKey) as any;
+    if (cached) {
+      console.log(`Using cached data for raffle ${address}`);
+      const raffleData: RaffleData = {
+        owner: cached.raffleOwner as `0x${string}`,
+        token: cached.raffleToken as `0x${string}`,
+        tokenDecimals: cached.tokenDecimals,
+        winner: cached.raffleWinner as `0x${string}`,
+        prizeDistributed: cached.prizeDistributed,
+        balance: cached.balance,
+        lastRequestId: BigInt(cached.lastRequestId || 0),
+      };
+      return <RaffleManagement address={address} initialRaffleData={raffleData} />;
     }
     
-    throw lastError || new Error('Failed to fetch raffle after retries');
+    // If not cached, fetch from blockchain
+    console.log(`Fetching raffle ${address} from blockchain...`);
+    
+    const raffleContract = getContract({
+      chain,
+      address: address as `0x${string}`,
+      client,
+    });
+
+    const [raffleOwner, raffleToken, raffleWinner, rafflePrizeDistributed, raffleLastRequestId] = await Promise.all([
+      owner({ contract: raffleContract }),
+      token({ contract: raffleContract }),
+      winner({ contract: raffleContract }),
+      prizeDistributed({ contract: raffleContract }),
+      lastRequestId({ contract: raffleContract }),
+    ]);
+
+    // Get token contract for additional data
+    const tokenContract = getContract({
+      chain,
+      address: raffleToken,
+      client,
+    });
+
+    const [tokenDecimals, raffleBalance] = await Promise.all([
+      decimals({ contract: tokenContract }),
+      balanceOf({ 
+        contract: tokenContract,
+        address: address as `0x${string}`,
+      }),
+    ]);
+
+    const raffleData: RaffleData = {
+      owner: raffleOwner as `0x${string}`,
+      token: raffleToken as `0x${string}`,
+      tokenDecimals,
+      winner: raffleWinner as `0x${string}`,
+      prizeDistributed: rafflePrizeDistributed,
+      balance: raffleBalance.toString(),
+      lastRequestId: raffleLastRequestId,
+    };
+    
+    // Cache the result
+    const serializableRaffle = {
+      raffleAddress: address,
+      raffleOwner,
+      raffleToken,
+      raffleWinner,
+      prizeDistributed: rafflePrizeDistributed,
+      lastRequestId: raffleLastRequestId.toString(),
+      tokenDecimals,
+      balance: raffleBalance.toString(),
+    };
+    
+    if (rafflePrizeDistributed) {
+      // Completed raffle - store permanently
+      await redisCache.set(cacheKey, serializableRaffle);
+      console.log(`Cached completed raffle ${address} permanently`);
+    } else {
+      // Active raffle - store with TTL
+      await redisCache.set(cacheKey, serializableRaffle, 60);
+      console.log(`Cached active raffle ${address} with 60s TTL`);
+    }
+
+    return <RaffleManagement address={address} initialRaffleData={raffleData} />;
   } catch (error) {
     console.error("Error fetching raffle data:", error);
     
