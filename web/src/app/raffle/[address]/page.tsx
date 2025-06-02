@@ -34,28 +34,53 @@ export default async function RafflePage({ params }: PageProps) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
-    const response = await fetch(`${baseUrl}/api/raffles/${address}`, {
-      cache: 'no-store', // Ensure fresh data on server-side
-    });
+    // Add retry logic for rate-limited requests
+    let retries = 0;
+    const maxRetries = 3;
+    let lastError;
+    
+    while (retries < maxRetries) {
+      try {
+        const response = await fetch(`${baseUrl}/api/raffles/${address}`, {
+          cache: 'no-store', // Ensure fresh data on server-side
+        });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch raffle: ${response.statusText}`);
+        if (response.ok) {
+          const { raffle } = await response.json();
+
+          // The API returns all fields we need now
+          const raffleData: RaffleData = {
+            owner: raffle.raffleOwner as `0x${string}`,
+            token: raffle.raffleToken as `0x${string}`,
+            tokenDecimals: raffle.tokenDecimals,
+            winner: raffle.raffleWinner as `0x${string}`,
+            prizeDistributed: raffle.prizeDistributed,
+            balance: raffle.balance,
+            lastRequestId: BigInt(raffle.lastRequestId || 0), // Convert string to bigint
+          };
+
+          return <RaffleManagement address={address} initialRaffleData={raffleData} />;
+        }
+        
+        if (response.status === 429) {
+          // Rate limited - wait and retry
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retries + 1)));
+          retries++;
+          lastError = new Error('Rate limited');
+          continue;
+        }
+
+        throw new Error(`Failed to fetch raffle: ${response.statusText}`);
+      } catch (error) {
+        lastError = error;
+        retries++;
+        if (retries < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
     }
-
-    const { raffle } = await response.json();
-
-    // The API returns all fields we need now
-    const raffleData: RaffleData = {
-      owner: raffle.raffleOwner as `0x${string}`,
-      token: raffle.raffleToken as `0x${string}`,
-      tokenDecimals: raffle.tokenDecimals,
-      winner: raffle.raffleWinner as `0x${string}`,
-      prizeDistributed: raffle.prizeDistributed,
-      balance: raffle.balance,
-      lastRequestId: BigInt(raffle.lastRequestId || 0), // Convert string to bigint
-    };
-
-    return <RaffleManagement address={address} initialRaffleData={raffleData} />;
+    
+    throw lastError || new Error('Failed to fetch raffle after retries');
   } catch (error) {
     console.error("Error fetching raffle data:", error);
     

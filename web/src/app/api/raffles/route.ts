@@ -5,7 +5,7 @@ import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { factoryContract } from "@/constants/contracts";
 import { getContract } from "thirdweb";
-import { redisCache } from "@/lib/redis";
+import { redisCache, redis } from "@/lib/redis";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 
 // Remove Next.js cache to rely on Redis
@@ -14,9 +14,8 @@ export const dynamic = 'force-dynamic';
 const CACHE_KEY = 'raffles:all';
 const LIST_CACHE_TTL = 30; // 30 seconds for the list
 const ACTIVE_RAFFLE_TTL = 60; // 60 seconds for active raffles
-
-// In-memory promise cache for request deduplication
-let fetchingRafflesPromise: Promise<any> | null = null;
+const DEDUP_KEY = 'dedup:raffles:all';
+const DEDUP_TTL = 10; // 10 seconds for list deduplication
 
 interface Raffle {
   raffleAddress: string;
@@ -43,15 +42,33 @@ export async function GET() {
       return NextResponse.json({ raffles: serializedList, cached: true });
     }
 
-    // Check if we're already fetching raffles
-    if (fetchingRafflesPromise) {
-      console.log('Deduplicating raffles list request');
-      const raffles = await fetchingRafflesPromise;
-      return NextResponse.json({ raffles, cached: false });
+    // Check if another request is already fetching the list
+    if (redis) {
+      const isFetching = await redis.exists(DEDUP_KEY);
+      if (isFetching) {
+        console.log('Another request is already fetching raffles list, waiting...');
+        // Wait and try to get from cache
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Try up to 15 times (3 seconds total)
+        for (let i = 0; i < 15; i++) {
+          const cached = await redisCache.get(CACHE_KEY);
+          if (cached) {
+            const serializedList = (cached as any[]).map(raffle => ({
+              ...raffle,
+              lastRequestId: raffle.lastRequestId?.toString(),
+            }));
+            return NextResponse.json({ raffles: serializedList, cached: true, deduplicated: true });
+          }
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      // Mark that we're fetching the list
+      await redis.set(DEDUP_KEY, "1", { ex: DEDUP_TTL });
     }
 
-    // Create new fetch promise
-    fetchingRafflesPromise = (async () => {
+    try {
       console.log('Fetching raffle addresses from blockchain...');
       
       const raffleAddresses = await getRaffles({
@@ -162,20 +179,21 @@ export async function GET() {
       await redisCache.set(CACHE_KEY, serializedRaffles, LIST_CACHE_TTL);
       console.log(`Cached complete raffles list with ${LIST_CACHE_TTL}s TTL`);
 
-      return serializedRaffles;
-    })();
-
-    try {
-      const raffles = await fetchingRafflesPromise;
-      return NextResponse.json({ raffles, cached: false });
+      return NextResponse.json({ raffles: serializedRaffles, cached: false });
     } finally {
-      // Clean up the promise cache
-      fetchingRafflesPromise = null;
+      // Clean up deduplication key
+      if (redis) {
+        await redis.del(DEDUP_KEY);
+      }
     }
   } catch (error) {
     console.error('Error fetching raffles:', error);
-    // Make sure to clean up on error
-    fetchingRafflesPromise = null;
+    // Make sure to clean up dedup key on error
+    try {
+      if (redis) {
+        await redis.del(DEDUP_KEY);
+      }
+    } catch {}
     return NextResponse.json({ error: 'Failed to fetch raffles' }, { status: 500 });
   }
 } 

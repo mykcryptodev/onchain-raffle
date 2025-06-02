@@ -3,15 +3,14 @@ import { owner, token, winner, prizeDistributed, lastRequestId } from "@/abis/ra
 import { client } from "@/constants/thirdweb";
 import { chain } from "@/constants/chain";
 import { getContract } from "thirdweb";
-import { redisCache } from "@/lib/redis";
+import { redisCache, redis } from "@/lib/redis";
 import { balanceOf, decimals } from "thirdweb/extensions/erc20";
 
 export const dynamic = 'force-dynamic';
 
 const ACTIVE_RAFFLE_TTL = 60; // 60 seconds for active raffles
-
-// In-memory promise cache for request deduplication
-const fetchPromises = new Map<string, Promise<any>>();
+const RATE_LIMIT_TTL = 2; // 2 seconds rate limit window
+const DEDUP_TTL = 5; // 5 seconds for deduplication
 
 interface Params {
   params: Promise<{
@@ -34,8 +33,35 @@ export async function GET(request: Request, { params }: Params) {
   try {
     const { address } = await params;
     const cacheKey = `raffle:${address}`;
+    const rateLimitKey = `ratelimit:raffle:${address}`;
+    const dedupKey = `dedup:raffle:${address}`;
     
-    // Always try Redis first
+    // Check rate limit in Redis
+    if (redis) {
+      const isRateLimited = await redis.exists(rateLimitKey);
+      if (isRateLimited) {
+        console.log(`Rate limiting request for raffle ${address}`);
+        // Try to return from cache if available
+        const cached = await redisCache.get(cacheKey) as RaffleData | null;
+        if (cached) {
+          return NextResponse.json({ 
+            raffle: {
+              ...cached,
+              lastRequestId: cached.lastRequestId?.toString() || "0",
+            }, 
+            cached: true,
+            rateLimited: true 
+          });
+        }
+        // If no cache, return 429 Too Many Requests
+        return NextResponse.json(
+          { error: 'Too many requests, please try again later' },
+          { status: 429 }
+        );
+      }
+    }
+    
+    // Always try Redis cache first
     const cached = await redisCache.get(cacheKey) as RaffleData | null;
     if (cached) {
       console.log(`Returning raffle ${address} from Redis cache`);
@@ -43,28 +69,47 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.json({ 
         raffle: {
           ...cached,
-          lastRequestId: cached.lastRequestId.toString(), // Ensure it's serialized as string
+          lastRequestId: cached.lastRequestId?.toString() || "0", // Handle undefined and ensure string
         }, 
         cached: true 
       });
     }
 
-    // Check if we're already fetching this raffle
-    const existingPromise = fetchPromises.get(address);
-    if (existingPromise) {
-      console.log(`Deduplicating request for raffle ${address}`);
-      const raffle = await existingPromise;
-      return NextResponse.json({ 
-        raffle: {
-          ...raffle,
-          lastRequestId: raffle.lastRequestId.toString(),
-        }, 
-        cached: false 
-      });
+    // Check if another request is already fetching this raffle
+    if (redis) {
+      const isFetching = await redis.exists(dedupKey);
+      if (isFetching) {
+        console.log(`Another request is already fetching raffle ${address}, waiting...`);
+        // Wait a bit and try to get from cache
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Try up to 20 times (2 seconds total)
+        for (let i = 0; i < 20; i++) {
+          const cached = await redisCache.get(cacheKey) as RaffleData | null;
+          if (cached) {
+            return NextResponse.json({ 
+              raffle: {
+                ...cached,
+                lastRequestId: cached.lastRequestId?.toString() || "0",
+              }, 
+              cached: true,
+              deduplicated: true
+            });
+          }
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Mark that we're fetching this raffle
+      await redis.set(dedupKey, "1", { ex: DEDUP_TTL });
     }
 
-    // Create a new fetch promise
-    const fetchPromise = (async () => {
+    // Set rate limit for this address
+    if (redis) {
+      await redis.set(rateLimitKey, "1", { ex: RATE_LIMIT_TTL });
+    }
+
+    try {
       console.log(`Fetching raffle ${address} from blockchain...`);
       
       const raffleContract = getContract({
@@ -126,32 +171,29 @@ export async function GET(request: Request, { params }: Params) {
         console.log(`Cached active raffle ${address} in Redis with ${ACTIVE_RAFFLE_TTL}s TTL`);
       }
 
-      return raffle;
-    })();
-
-    // Store the promise for deduplication
-    fetchPromises.set(address, fetchPromise);
-
-    try {
-      const raffle = await fetchPromise;
-      
       // Return with bigint serialized as string
       return NextResponse.json({ 
         raffle: {
           ...raffle,
-          lastRequestId: raffle.lastRequestId.toString(),
+          lastRequestId: raffle.lastRequestId?.toString() || "0",
         }, 
         cached: false 
       });
     } finally {
-      // Clean up the promise cache
-      fetchPromises.delete(address);
+      // Clean up deduplication key
+      if (redis) {
+        await redis.del(dedupKey);
+      }
     }
   } catch (error) {
     console.error('Error fetching raffle:', error);
-    // Make sure to clean up on error
-    const { address } = await params;
-    fetchPromises.delete(address);
+    // Make sure to clean up dedup key on error
+    try {
+      const { address } = await params;
+      if (redis) {
+        await redis.del(`dedup:raffle:${address}`);
+      }
+    } catch {}
     return NextResponse.json({ error: 'Failed to fetch raffle' }, { status: 500 });
   }
 } 

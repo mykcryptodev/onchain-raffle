@@ -28,7 +28,11 @@ export function RaffleCard({ raffleAddress, raffleOwner, raffleToken, raffleWinn
             {shortenAddress(raffleAddress)}
           </Link>
         </div>
-        <Link href={`/raffle/${raffleAddress}`} className="py-2 px-4 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-lg font-medium text-sm">
+        <Link
+          href={`/raffle/${raffleAddress}`}
+          className="py-2 px-4 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-lg font-medium text-sm"
+          prefetch={false}
+        >
           View Raffle
         </Link>
       </div>
