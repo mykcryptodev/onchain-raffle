@@ -57,6 +57,14 @@ export async function GET(request: NextRequest, { params }: Params) {
     const ownerName = ownerProfile?.name || shortenAddress(owner);
     const ownerAvatar = ownerProfile?.avatar;
 
+    // Truncate long names to prevent overflow
+    const truncateName = (name: string, maxLength: number = 20) => {
+      if (name.length > maxLength) {
+        return name.slice(0, maxLength - 3) + '...';
+      }
+      return name;
+    };
+
     // Get the best available profile for winner
     const winnerProfile = winnerProfiles.find(p => p.type === "ens") || 
                          winnerProfiles.find(p => p.type === "farcaster") || 
@@ -164,22 +172,22 @@ export async function GET(request: NextRequest, { params }: Params) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "24px",
-                marginBottom: "20px",
+                gap: "20px",
+                marginBottom: "16px",
               }}
             >
               <img
                 src={logoUrl}
-                width="80"
-                height="80"
+                width="64"
+                height="64"
                 style={{
-                  borderRadius: "20px",
+                  borderRadius: "16px",
                   boxShadow: "0 0 40px rgba(139, 92, 246, 0.5)",
                 }}
               />
               <h1
                 style={{
-                  fontSize: "72px",
+                  fontSize: "56px",
                   fontWeight: "900",
                   background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%)",
                   backgroundClip: "text",
@@ -199,42 +207,42 @@ export async function GET(request: NextRequest, { params }: Params) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                padding: "30px 50px",
+                padding: "20px 40px",
                 background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)",
-                borderRadius: "20px",
+                borderRadius: "16px",
                 border: "1px solid rgba(139, 92, 246, 0.3)",
-                marginBottom: "30px",
+                marginBottom: "20px",
                 position: "relative",
               }}
             >
               <div
                 style={{
-                  fontSize: "20px",
+                  fontSize: "16px",
                   color: "#94a3b8",
-                  marginBottom: "8px",
+                  marginBottom: "6px",
                   textTransform: "uppercase",
-                  letterSpacing: "2px",
+                  letterSpacing: "1.5px",
                 }}
               >
                 🎁 Prize Token
               </div>
               <div
                 style={{
-                  fontSize: "48px",
+                  fontSize: "36px",
                   fontWeight: "800",
                   background: "linear-gradient(to right, #fbbf24, #f59e0b)",
                   backgroundClip: "text",
                   color: "transparent",
                   display: "flex",
                   alignItems: "center",
-                  gap: "12px",
+                  gap: "10px",
                 }}
               >
                 {name}
                 {symbol && (
                   <span
                     style={{
-                      fontSize: "28px",
+                      fontSize: "22px",
                       opacity: "0.8",
                     }}
                   >
@@ -248,17 +256,17 @@ export async function GET(request: NextRequest, { params }: Params) {
             <div
               style={{
                 position: "absolute",
-                top: "30px",
-                right: "30px",
-                padding: "12px 24px",
-                borderRadius: "24px",
+                top: "20px",
+                right: "20px",
+                padding: "10px 20px",
+                borderRadius: "20px",
                 background: isActive 
                   ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)" 
                   : prizeDistributed 
                     ? "linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)"
                     : "linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)",
                 color: "white",
-                fontSize: "18px",
+                fontSize: "14px",
                 fontWeight: "700",
                 boxShadow: isActive ? "0 0 30px rgba(16, 185, 129, 0.5)" : "none",
                 textTransform: "uppercase",
@@ -272,22 +280,32 @@ export async function GET(request: NextRequest, { params }: Params) {
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: "16px",
-                padding: "20px 36px",
+                padding: "20px 40px",
                 background: "rgba(30, 41, 59, 0.5)",
                 borderRadius: "16px",
                 border: "1px solid rgba(148, 163, 184, 0.2)",
-                marginBottom: winner !== ZERO_ADDRESS ? "20px" : "0",
+                marginBottom: winner !== ZERO_ADDRESS ? "16px" : "0",
               }}
             >
-              <span style={{ color: "#64748b", fontSize: "20px" }}>Created by</span>
+              <div
+                style={{
+                  fontSize: "16px",
+                  color: "#94a3b8",
+                  marginBottom: "6px",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                }}
+              >
+                👤 Created By
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 {ownerAvatar ? (
                   <img
                     src={ownerAvatar}
-                    width="40"
-                    height="40"
+                    width="36"
+                    height="36"
                     style={{
                       borderRadius: "50%",
                       border: "2px solid rgba(139, 92, 246, 0.5)",
@@ -296,14 +314,14 @@ export async function GET(request: NextRequest, { params }: Params) {
                 ) : (
                   <div
                     style={{
-                      width: "40px",
-                      height: "40px",
+                      width: "36px",
+                      height: "36px",
                       borderRadius: "50%",
                       background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "20px",
+                      fontSize: "18px",
                       fontWeight: "700",
                       color: "white",
                     }}
@@ -314,16 +332,17 @@ export async function GET(request: NextRequest, { params }: Params) {
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ 
                     color: "#e2e8f0", 
-                    fontSize: "22px", 
-                    fontWeight: "700",
+                    fontSize: "32px", 
+                    fontWeight: "800",
+                    lineHeight: "1",
                   }}>
-                    {ownerName}
+                    {truncateName(ownerName)}
                   </span>
                   {ownerProfile && (
                     <span style={{ 
                       color: "#64748b", 
                       fontSize: "14px",
-                      textTransform: "capitalize",
+                      marginTop: "2px",
                     }}>
                       {shortenAddress(owner)}
                     </span>
@@ -337,22 +356,33 @@ export async function GET(request: NextRequest, { params }: Params) {
               <div
                 style={{
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  gap: "16px",
-                  padding: "24px 40px",
+                  padding: "20px 40px",
                   background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%)",
-                  borderRadius: "20px",
+                  borderRadius: "16px",
                   border: "2px solid #10b981",
                   boxShadow: "0 0 40px rgba(16, 185, 129, 0.3)",
                 }}
               >
-                <span style={{ fontSize: "32px" }}>🏆</span>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    color: "#10b981",
+                    marginBottom: "6px",
+                    textTransform: "uppercase",
+                    letterSpacing: "1.5px",
+                    fontWeight: "600",
+                  }}
+                >
+                  🏆 Winner
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   {winnerAvatar ? (
                     <img
                       src={winnerAvatar}
-                      width="40"
-                      height="40"
+                      width="36"
+                      height="36"
                       style={{
                         borderRadius: "50%",
                         border: "2px solid #10b981",
@@ -361,14 +391,14 @@ export async function GET(request: NextRequest, { params }: Params) {
                   ) : (
                     <div
                       style={{
-                        width: "40px",
-                        height: "40px",
+                        width: "36px",
+                        height: "36px",
                         borderRadius: "50%",
                         background: "linear-gradient(135deg, #10b981, #34d399)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "20px",
+                        fontSize: "18px",
                         fontWeight: "700",
                         color: "white",
                       }}
@@ -377,19 +407,19 @@ export async function GET(request: NextRequest, { params }: Params) {
                     </div>
                   )}
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ color: "#10b981", fontSize: "18px", fontWeight: "600" }}>WINNER</span>
                     <span style={{ 
                       color: "#f0fdf4", 
-                      fontSize: "24px", 
+                      fontSize: "32px", 
                       fontWeight: "800",
+                      lineHeight: "1",
                     }}>
-                      {winnerName}
+                      {truncateName(winnerName)}
                     </span>
                     {winnerProfile && (
                       <span style={{ 
                         color: "#86efac", 
                         fontSize: "14px",
-                        textTransform: "capitalize",
+                        marginTop: "2px",
                       }}>
                         {shortenAddress(winner)}
                       </span>
@@ -405,17 +435,17 @@ export async function GET(request: NextRequest, { params }: Params) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "12px",
-                  marginTop: "30px",
-                  padding: "16px 32px",
+                  gap: "10px",
+                  marginTop: "20px",
+                  padding: "12px 24px",
                   background: "linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                 }}
               >
-                <span style={{ fontSize: "28px" }}>🎲</span>
+                <span style={{ fontSize: "24px" }}>🎲</span>
                 <p
                   style={{
-                    fontSize: "22px",
+                    fontSize: "18px",
                     color: "#e2e8f0",
                     margin: "0",
                     fontWeight: "600",
