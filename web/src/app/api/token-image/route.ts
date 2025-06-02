@@ -26,7 +26,15 @@ export async function GET(request: NextRequest) {
       next: { revalidate: 3600 }
     });
 
-    if (!res.ok) {
+    if (!res.ok) {      
+      // Return 404 if token not found
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const json = await res.json() as { image: { large: string } };
+    const imageUrl = json.image?.large;
+
+    if (!imageUrl) {
       // try fetching the "image" function on the token in case its a clanker
       const tokenContract = getContract({
         chain,
@@ -49,15 +57,6 @@ export async function GET(request: NextRequest) {
           },
         });
       }
-      
-      // Return 404 if token not found
-      return new NextResponse(null, { status: 404 });
-    }
-
-    const json = await res.json() as { image: { large: string } };
-    const imageUrl = json.image?.large;
-
-    if (!imageUrl) {
       return new NextResponse(null, { status: 404 });
     }
 
