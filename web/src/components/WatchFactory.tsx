@@ -10,19 +10,27 @@ import { raffleCreatedEvent } from "@/abis/factory";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useInvalidateRaffles } from "@/hooks/useRaffles";
-import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
-export function WatchFactory() {
+interface WatchFactoryProps {
+  isWatching: boolean;
+  onWatchComplete?: () => void;
+}
+
+export function WatchFactory({ isWatching, onWatchComplete }: WatchFactoryProps) {
   const account = useActiveAccount();
   const router = useRouter();
   const processedEvents = useRef<Set<string>>(new Set());
   const invalidateRaffles = useInvalidateRaffles();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!account?.address) return;
+    // Only watch if explicitly told to and user is connected
+    if (!isWatching || !account?.address) return;
 
     let isMounted = true;
     let unwatch: (() => void) | undefined;
+    
+    console.log('Starting to watch for raffle creation...');
     
     const setupEventWatcher = async () => {
       try {
@@ -83,6 +91,10 @@ export function WatchFactory() {
                   // Redirect to the new raffle page after a short delay
                   setTimeout(() => {
                     router.push(`/raffle/${raffle}`);
+                    // Stop watching after successful redirect
+                    if (onWatchComplete) {
+                      onWatchComplete();
+                    }
                   }, 2000);
                 } else {
                   // If someone else created a raffle, just invalidate the cache
@@ -100,8 +112,23 @@ export function WatchFactory() {
             }
           },
         });
+        
+        // Set a timeout to stop watching after 2 minutes if no event is detected
+        timeoutRef.current = setTimeout(() => {
+          console.log('Stopping raffle creation watch due to timeout');
+          if (unwatch) {
+            unwatch();
+          }
+          if (onWatchComplete) {
+            onWatchComplete();
+          }
+        }, 120000); // 2 minutes
+        
       } catch (error) {
         console.error("Error setting up event watcher:", error);
+        if (onWatchComplete) {
+          onWatchComplete();
+        }
       }
     };
     
@@ -112,8 +139,11 @@ export function WatchFactory() {
       if (unwatch) {
         unwatch();
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, [account, router, invalidateRaffles]);
+  }, [isWatching, account, router, invalidateRaffles, onWatchComplete]);
 
   // This component doesn't render anything
   return null;

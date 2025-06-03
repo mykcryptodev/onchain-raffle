@@ -15,6 +15,8 @@ interface WatchRaffleProps {
   onPrizeDistributed: () => void;
   onBalanceUpdate: (balance: string) => void;
   onRandomRequested?: (requestId: bigint) => void;
+  prizeDistributed?: boolean; // Add this to know if we should stop watching
+  hasWinner?: boolean; // Add this to reduce watching after winner is selected
 }
 
 export function WatchRaffle({ 
@@ -23,7 +25,9 @@ export function WatchRaffle({
   onWinnerSelected, 
   onPrizeDistributed,
   onBalanceUpdate,
-  onRandomRequested 
+  onRandomRequested,
+  prizeDistributed = false,
+  hasWinner = false
 }: WatchRaffleProps) {
   const processedEvents = useRef<Set<string>>(new Set());
   const balanceUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,6 +39,12 @@ export function WatchRaffle({
   });
 
   useEffect(() => {
+    // Don't watch events if the raffle is completed
+    if (prizeDistributed) {
+      console.log('Raffle is completed, not watching events');
+      return;
+    }
+
     let isMounted = true;
     let unwatch: (() => void) | undefined;
     
@@ -47,15 +57,29 @@ export function WatchRaffle({
         
         if (!isMounted) return;
         
-        // Watch for the events with reduced polling frequency
+        // Determine which events to watch based on raffle state
+        const eventsToWatch = [];
+        
+        // Always watch for winner selection unless we have a winner
+        if (!hasWinner) {
+          eventsToWatch.push(raffleAbi.winnerSelectedEvent());
+          eventsToWatch.push(raffleAbi.randomRequestedEvent());
+          eventsToWatch.push(raffleAbi.prizeFundedEvent());
+        } else {
+          // If we have a winner, only watch for prize distribution
+          eventsToWatch.push(raffleAbi.prizeDistributedEvent());
+        }
+        
+        // Only set up watcher if we have events to watch
+        if (eventsToWatch.length === 0) {
+          console.log('No events to watch');
+          return;
+        }
+        
+        // Watch for the events
         unwatch = watchContractEvents({
           contract: raffleContract,
-          events: [
-            raffleAbi.winnerSelectedEvent(),
-            raffleAbi.prizeDistributedEvent(),
-            raffleAbi.prizeFundedEvent(),
-            raffleAbi.randomRequestedEvent(),
-          ],
+          events: eventsToWatch,
           latestBlockNumber: currentBlock,
           onEvents: async (events) => {
             for (const event of events) {
@@ -98,6 +122,11 @@ export function WatchRaffle({
                 toast.success(`Winner selected: ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}!`, {
                   autoClose: 8000,
                 });
+                
+                // Stop watching other events now that we have a winner
+                if (unwatch) {
+                  unwatch();
+                }
               } else if (event.eventName === "RandomRequested") {
                 const args = event.args as { requestId: bigint };
                 const requestId = args.requestId;
@@ -138,6 +167,11 @@ export function WatchRaffle({
                 toast.success(`Prize distributed to ${winnerAddress.slice(0, 6)}...${winnerAddress.slice(-4)}!`, {
                   autoClose: 8000,
                 });
+                
+                // Stop watching - raffle is complete
+                if (unwatch) {
+                  unwatch();
+                }
               } else if (event.eventName === "PrizeFunded") {
                 const args = event.args as { from: `0x${string}`; amount: bigint };
                 const from = args.from;
@@ -196,7 +230,7 @@ export function WatchRaffle({
         clearTimeout(balanceUpdateTimeoutRef.current);
       }
     };
-  }, [raffleContract, raffleAddress, tokenAddress, onWinnerSelected, onPrizeDistributed, onBalanceUpdate, onRandomRequested]);
+  }, [raffleContract, raffleAddress, tokenAddress, onWinnerSelected, onPrizeDistributed, onBalanceUpdate, onRandomRequested, prizeDistributed, hasWinner]);
 
   // This component doesn't render anything
   return null;

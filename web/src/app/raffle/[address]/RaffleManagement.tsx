@@ -28,6 +28,36 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const { shareRaffle } = useFarcaster();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const refreshRaffleData = useCallback(async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      // Fetch fresh raffle data
+      const response = await fetch(`/api/raffles/${address}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.raffle) {
+          setRaffleData({
+            owner: data.raffle.raffleOwner,
+            token: data.raffle.raffleToken,
+            tokenDecimals: data.raffle.tokenDecimals,
+            winner: data.raffle.raffleWinner,
+            prizeDistributed: data.raffle.prizeDistributed,
+            balance: data.raffle.balance,
+            lastRequestId: BigInt(data.raffle.lastRequestId || 0),
+            finalPrizeAmount: data.raffle.finalPrizeAmount || "0",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing raffle data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [address, isRefreshing]);
   
   const raffleContract = getContract({
     client,
@@ -95,6 +125,8 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
         onPrizeDistributed={handlePrizeDistributed}
         onBalanceUpdate={handleBalanceUpdate}
         onRandomRequested={handleRandomRequested}
+        prizeDistributed={raffleData.prizeDistributed}
+        hasWinner={hasWinner}
       />
       
       {/* Header */}
@@ -109,6 +141,22 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={refreshRaffleData}
+            disabled={isRefreshing}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:opacity-50 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
+            title="Refresh raffle data"
+          >
+            <svg 
+              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
           <button
             onClick={() => shareRaffle(address)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
