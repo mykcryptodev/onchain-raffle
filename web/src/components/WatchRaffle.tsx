@@ -26,6 +26,7 @@ export function WatchRaffle({
   onRandomRequested 
 }: WatchRaffleProps) {
   const processedEvents = useRef<Set<string>>(new Set());
+  const balanceUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const raffleContract = getContract({
     client,
@@ -143,29 +144,37 @@ export function WatchRaffle({
                 const amount = args.amount;
                 console.log("Prize funded by:", from, "amount:", amount);
                 
-                // Fetch the new balance
-                try {
-                  const tokenContract = getContract({
-                    client,
-                    chain,
-                    address: tokenAddress,
-                  });
-                  
-                  const newBalance = await balanceOf({
-                    contract: tokenContract,
-                    address: raffleAddress,
-                  });
-                  
-                  // Update the parent component
-                  onBalanceUpdate(newBalance.toString());
-                  
-                  // Show a toast notification
-                  toast.success(`Raffle funded by ${from.slice(0, 6)}...${from.slice(-4)}`, {
-                    autoClose: 5000,
-                  });
-                } catch (error) {
-                  console.error("Error fetching new balance:", error);
+                // Clear any existing timeout
+                if (balanceUpdateTimeoutRef.current) {
+                  clearTimeout(balanceUpdateTimeoutRef.current);
                 }
+                
+                // Debounce balance updates to prevent rapid successive fetches
+                balanceUpdateTimeoutRef.current = setTimeout(async () => {
+                  // Fetch the new balance
+                  try {
+                    const tokenContract = getContract({
+                      client,
+                      chain,
+                      address: tokenAddress,
+                    });
+                    
+                    const newBalance = await balanceOf({
+                      contract: tokenContract,
+                      address: raffleAddress,
+                    });
+                    
+                    // Update the parent component
+                    onBalanceUpdate(newBalance.toString());
+                    
+                    // Show a toast notification
+                    toast.success(`Raffle funded by ${from.slice(0, 6)}...${from.slice(-4)}`, {
+                      autoClose: 5000,
+                    });
+                  } catch (error) {
+                    console.error("Error fetching new balance:", error);
+                  }
+                }, 1000); // Wait 1 second before fetching balance to batch multiple events
               }
             }
           },
@@ -181,6 +190,10 @@ export function WatchRaffle({
       isMounted = false;
       if (unwatch) {
         unwatch();
+      }
+      // Clear any pending balance update timeout
+      if (balanceUpdateTimeoutRef.current) {
+        clearTimeout(balanceUpdateTimeoutRef.current);
       }
     };
   }, [raffleContract, raffleAddress, tokenAddress, onWinnerSelected, onPrizeDistributed, onBalanceUpdate, onRandomRequested]);

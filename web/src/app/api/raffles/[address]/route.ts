@@ -33,6 +33,13 @@ interface RaffleData {
 export async function GET(request: Request, { params }: Params) {
   try {
     const { address } = await params;
+    
+    // Get request headers for debugging
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    const referer = request.headers.get('referer') || 'unknown';
+    
+    console.log(`[${new Date().toISOString()}] GET /api/raffles/${address} - UA: ${userAgent.substring(0, 50)}... Referer: ${referer}`);
+    
     const cacheKey = `raffle:${address}`;
     const rateLimitKey = `ratelimit:raffle:${address}`;
     const dedupKey = `dedup:raffle:${address}`;

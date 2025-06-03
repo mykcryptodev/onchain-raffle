@@ -6,7 +6,8 @@ import { ContractOptions, getGasPrice, prepareContractCall } from "thirdweb";
 import { chain } from "@/constants/chain";
 import { client } from "@/constants/thirdweb";
 import { toast } from "react-toastify";
-import { ImportQuoteCastersModal } from "../ImportQuoteCastersModal";
+import { ImportSearchedFarcasterUsers } from "../ImportSearchedFarcasterUsers";
+import { ImportCastLikersModal } from "../ImportCastLikersModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -23,6 +24,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
 }) => {
   const [eligibleAddresses, setEligibleAddresses] = useState("");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isCastLikersModalOpen, setIsCastLikersModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -80,13 +82,19 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           Enter eligible addresses (one per line or comma-separated)
         </p>
         
-        {/* Import Quote Casters Button */}
-        <div className="mb-3">
+        {/* Import Buttons */}
+        <div className="mb-3 flex gap-2 flex-wrap">
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
             Search Farcaster Users
+          </button>
+          <button
+            onClick={() => setIsCastLikersModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Import Cast Likers
           </button>
         </div>
 
@@ -131,9 +139,15 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
         </div>
       </div>
 
-      <ImportQuoteCastersModal
+      <ImportSearchedFarcasterUsers
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        onImport={handleAddressesImported}
+      />
+
+      <ImportCastLikersModal
+        isOpen={isCastLikersModalOpen}
+        onClose={() => setIsCastLikersModalOpen(false)}
         onImport={handleAddressesImported}
       />
     </>

@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       
       const userResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/by_username?username=${encodeURIComponent(username)}`, {
         headers: {
-          'api_key': NEYNAR_API_KEY,
+          'x-api-key': NEYNAR_API_KEY,
         },
       });
 
@@ -98,15 +98,16 @@ export async function GET(request: Request) {
       }
 
       console.log(`Searching for users: ${query}`);
-      
-      const searchResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/search?q=${encodeURIComponent(query)}`, {
+
+      const searchResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/search?q=${encodeURIComponent(query)}&limit=10`, {
         headers: {
-          'api_key': NEYNAR_API_KEY,
+          'x-api-key': NEYNAR_API_KEY,
         },
       });
 
       if (!searchResponse.ok) {
-        return NextResponse.json({ error: `Search failed: ${searchResponse.status}` }, { status: searchResponse.status });
+        const errorText = await searchResponse.text();
+        return NextResponse.json({ error: `Search failed: ${searchResponse.status}`, details: errorText }, { status: searchResponse.status });
       }
 
       const searchData: SearchResponse = await searchResponse.json();

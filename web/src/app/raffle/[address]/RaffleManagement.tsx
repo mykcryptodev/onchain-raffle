@@ -28,15 +28,7 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
   const { shareRaffle } = useFarcaster();
   
   const [raffleData, setRaffleData] = useState<RaffleData>(initialRaffleData);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const refreshPageData = useCallback(async () => {
-    setIsRefreshing(true);
-    // Small delay to ensure cache is invalidated
-    await new Promise(resolve => setTimeout(resolve, 500));
-    window.location.reload();
-  }, []);
-
   const raffleContract = getContract({
     client,
     chain,
@@ -253,8 +245,6 @@ export default function RaffleManagement({ address, initialRaffleData }: RaffleM
                   ...prev,
                   balance: newBalance.toString()
                 }));
-                
-                refreshPageData();
               } catch (error) {
                 console.error("Error fetching new balance:", error);
               }

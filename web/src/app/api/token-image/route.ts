@@ -43,8 +43,26 @@ async function tryFetchTokenImage(tokenAddress: string): Promise<{ imageBuffer: 
       method: "function image() view returns (string)",
     });
 
+    console.log('image 1', image);
+
     if (image) {
       const imageResponse = await fetch(image);
+      if (imageResponse.ok) {
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const contentType = imageResponse.headers.get('content-type') || 'image/png';
+        return { imageBuffer, contentType };
+      }
+    }
+
+    const imageSecondAttempt = await readContract({
+      contract: tokenContract,
+      method: "function imageUrl() view returns (string)",
+    });
+
+    console.log('image 2', imageSecondAttempt);
+
+    if (imageSecondAttempt) {
+      const imageResponse = await fetch(imageSecondAttempt);
       if (imageResponse.ok) {
         const imageBuffer = await imageResponse.arrayBuffer();
         const contentType = imageResponse.headers.get('content-type') || 'image/png';

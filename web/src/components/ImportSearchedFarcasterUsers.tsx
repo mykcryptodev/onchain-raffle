@@ -29,13 +29,13 @@ interface SelectedUser {
   eth_address: string;
 }
 
-interface ImportQuoteCastersModalProps {
+interface ImportSearchedFarcasterUsersProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (addresses: string[]) => void;
 }
 
-export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOpen, onClose, onImport }) => {
+export const ImportSearchedFarcasterUsers: FC<ImportSearchedFarcasterUsersProps> = ({ isOpen, onClose, onImport }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NeynarUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
@@ -169,7 +169,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
       {/* Modal */}
       <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
         <div 
-          className="bg-zinc-900 rounded-t-2xl sm:rounded-lg w-full sm:max-w-lg sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col relative"
+          className="bg-zinc-900 rounded-t-2xl sm:rounded-lg w-full sm:max-w-lg sm:w-full h-[95vh] sm:h-[80vh] overflow-hidden flex flex-col relative"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
@@ -183,7 +183,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
           </button>
 
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-zinc-700">
+          <div className="p-4 sm:p-6 border-b border-zinc-700 flex-shrink-0">
             <h2 className="text-xl sm:text-2xl font-bold mb-2">Search Farcaster Users</h2>
             <p className="text-sm text-zinc-400">
               Search and select users to add their Ethereum addresses to your raffle.
@@ -191,7 +191,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
           </div>
 
           {/* Search Bar - Always visible */}
-          <div className="p-4 sm:p-6 border-b border-zinc-700">
+          <div className="p-4 sm:p-6 border-b border-zinc-700 flex-shrink-0">
             <div className="relative">
               <input
                 type="text"
@@ -204,7 +204,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <svg className="w-5 h-5 animate-spin text-purple-500" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 818-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
               )}
@@ -218,7 +218,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
           </div>
 
           {/* Mobile Tabs */}
-          <div className="md:hidden border-b border-zinc-700">
+          <div className="md:hidden border-b border-zinc-700 flex-shrink-0">
             <div className="flex">
               <button
                 onClick={() => setActiveTab('search')}
@@ -244,62 +244,70 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {/* Mobile Search Results */}
-            <div className={`md:hidden h-full overflow-y-auto ${activeTab !== 'search' ? 'hidden' : ''}`}>
-              <div className="p-4">
-                {searchResults.length === 0 && !isSearching && debouncedQuery.length >= 2 && (
+            <div className={`md:hidden h-full ${activeTab !== 'search' ? 'hidden' : ''}`}>
+              {searchResults.length === 0 && !isSearching && debouncedQuery.length >= 2 ? (
+                <div className="p-4">
                   <p className="text-zinc-400 text-center py-8">No users found</p>
-                )}
-                {searchResults.length === 0 && debouncedQuery.length < 2 && (
-                  <p className="text-zinc-400 text-center py-8">Type at least 2 characters to search</p>
-                )}
-                <div className="space-y-3">
-                  {searchResults.map((user) => (
-                    <div
-                      key={user.fid}
-                      className="flex items-center gap-3 p-4 bg-zinc-800 rounded-lg active:bg-zinc-700 transition-colors"
-                      onClick={() => addUser(user)}
-                    >
-                      <img
-                        src={user.pfp_url}
-                        alt={user.display_name}
-                        className="w-12 h-12 rounded-full flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate text-base">{user.display_name}</div>
-                        <div className="text-sm text-zinc-400 truncate">@{user.username}</div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        {isLoadingUser === user.username ? (
-                          <svg className="w-6 h-6 animate-spin text-purple-500" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : selectedUsers.some(u => u.username === user.username) ? (
-                          <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  ))}
                 </div>
-              </div>
+              ) : searchResults.length === 0 && debouncedQuery.length < 2 ? (
+                <div className="p-4">
+                  <p className="text-zinc-400 text-center py-8">Type at least 2 characters to search</p>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col">
+                  <div className="flex-1 min-h-0 overflow-y-auto" style={{WebkitOverflowScrolling: 'touch'}}>
+                    <div className="p-4 space-y-3 pb-6">
+                      {searchResults.map((user) => (
+                        <div
+                          key={user.fid}
+                          className="flex items-center gap-3 p-4 bg-zinc-800 rounded-lg active:bg-zinc-700 transition-colors"
+                          onClick={() => addUser(user)}
+                        >
+                          <img
+                            src={user.pfp_url}
+                            alt={user.display_name}
+                            className="w-12 h-12 rounded-full flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate text-base">{user.display_name}</div>
+                            <div className="text-sm text-zinc-400 truncate">@{user.username}</div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {isLoadingUser === user.username ? (
+                              <svg className="w-6 h-6 animate-spin text-purple-500" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : selectedUsers.some(u => u.username === user.username) ? (
+                              <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Mobile Selected Users */}
-            <div className={`md:hidden h-full overflow-y-auto ${activeTab !== 'selected' ? 'hidden' : ''}`}>
-              <div className="p-4">
-                {selectedUsers.length === 0 ? (
+            <div className={`md:hidden h-full ${activeTab !== 'selected' ? 'hidden' : ''}`}>
+              {selectedUsers.length === 0 ? (
+                <div className="p-4">
                   <p className="text-zinc-400 text-center py-8">No users selected yet</p>
-                ) : (
-                  <>
-                    <div className="space-y-3 mb-6">
+                </div>
+              ) : (
+                <div className="h-full flex flex-col">
+                  <div className="flex-1 min-h-0 overflow-y-auto" style={{WebkitOverflowScrolling: 'touch'}}>
+                    <div className="p-4 space-y-3 pb-6">
                       {selectedUsers.map((user) => (
                         <div
                           key={user.username}
@@ -328,34 +336,34 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
                         </div>
                       ))}
                     </div>
+                  </div>
 
-                    {/* Addresses Textarea - Mobile */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Ethereum Addresses</label>
-                      <textarea
-                        value={addresses}
-                        readOnly
-                        className="w-full h-32 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg font-mono text-xs resize-none"
-                        placeholder="Ethereum addresses will appear here..."
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+                  {/* Addresses Textarea - Mobile */}
+                  <div className="flex-shrink-0 p-4 border-t border-zinc-700">
+                    <label className="block text-sm font-medium mb-2">Ethereum Addresses</label>
+                    <textarea
+                      value={addresses}
+                      readOnly
+                      className="w-full h-32 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg font-mono text-xs resize-none"
+                      placeholder="Ethereum addresses will appear here..."
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Desktop Two-Panel Layout */}
             <div className="hidden md:flex h-full">
               {/* Search Results */}
-              <div className="w-1/2 p-4 border-r border-zinc-700 overflow-y-auto">
-                <h3 className="text-lg font-semibold mb-3">Search Results</h3>
+              <div className="w-1/2 p-4 border-r border-zinc-700 flex flex-col min-h-0">
+                <h3 className="text-lg font-semibold mb-3 flex-shrink-0">Search Results</h3>
                 {searchResults.length === 0 && !isSearching && debouncedQuery.length >= 2 && (
                   <p className="text-zinc-400 text-sm">No users found</p>
                 )}
                 {searchResults.length === 0 && debouncedQuery.length < 2 && (
                   <p className="text-zinc-400 text-sm">Type at least 2 characters to search</p>
                 )}
-                <div className="space-y-2">
+                <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
                   {searchResults.map((user) => (
                     <div
                       key={user.fid}
@@ -365,7 +373,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
                       <img
                         src={user.pfp_url}
                         alt={user.display_name}
-                        className="w-10 h-10 rounded-full"
+                        className="w-10 h-10 rounded-full flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{user.display_name}</div>
@@ -374,7 +382,7 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
                       {isLoadingUser === user.username ? (
                         <svg className="w-4 h-4 animate-spin text-purple-500" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 818-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                       ) : selectedUsers.some(u => u.username === user.username) ? (
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -391,53 +399,60 @@ export const ImportQuoteCastersModal: FC<ImportQuoteCastersModalProps> = ({ isOp
               </div>
 
               {/* Selected Users */}
-              <div className="w-1/2 p-4 overflow-y-auto">
-                <h3 className="text-lg font-semibold mb-3">Selected Users ({selectedUsers.length})</h3>
-                <div className="space-y-2 mb-4">
-                  {selectedUsers.map((user) => (
-                    <div
-                      key={user.username}
-                      className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg"
-                    >
-                      <img
-                        src={user.pfp_url}
-                        alt={user.display_name}
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{user.display_name}</div>
-                        <div className="text-xs text-zinc-400 truncate">@{user.username}</div>
-                      </div>
-                      <button
-                        onClick={() => removeUser(user.username)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Addresses Textarea */}
-                {selectedUsers.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Ethereum Addresses</label>
-                    <textarea
-                      value={addresses}
-                      readOnly
-                      className="w-full h-32 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg font-mono text-xs resize-none"
-                      placeholder="Ethereum addresses will appear here..."
-                    />
+              <div className="w-1/2 p-4 flex flex-col min-h-0">
+                <h3 className="text-lg font-semibold mb-3 flex-shrink-0">Selected Users ({selectedUsers.length})</h3>
+                
+                {selectedUsers.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-zinc-400 text-sm">No users selected yet</p>
                   </div>
+                ) : (
+                  <>
+                    <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0">
+                      {selectedUsers.map((user) => (
+                        <div
+                          key={user.username}
+                          className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg"
+                        >
+                          <img
+                            src={user.pfp_url}
+                            alt={user.display_name}
+                            className="w-8 h-8 rounded-full flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{user.display_name}</div>
+                            <div className="text-xs text-zinc-400 truncate">@{user.username}</div>
+                          </div>
+                          <button
+                            onClick={() => removeUser(user.username)}
+                            className="text-red-400 hover:text-red-300 transition-colors p-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Addresses Textarea */}
+                    <div className="flex-shrink-0">
+                      <label className="block text-sm font-medium mb-2">Ethereum Addresses</label>
+                      <textarea
+                        value={addresses}
+                        readOnly
+                        className="w-full h-32 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg font-mono text-xs resize-none"
+                        placeholder="Ethereum addresses will appear here..."
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-4 sm:p-6 border-t border-zinc-700 flex justify-between items-center">
+          <div className="p-4 sm:p-6 border-t border-zinc-700 flex justify-between items-center flex-shrink-0">
             <div className="text-sm text-zinc-400">
               {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
             </div>
