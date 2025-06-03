@@ -86,7 +86,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
             onClick={() => setIsImportModalOpen(true)}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
-            Import Quote Casters
+            Search Farcaster Users
           </button>
         </div>
 
