@@ -30,6 +30,9 @@ interface CastLikesResponse {
   reactions: {
     user: NeynarUser;
   }[];
+  next?: {
+    cursor: string;
+  };
 }
 
 export async function POST(request: Request) {
@@ -63,36 +66,79 @@ export async function POST(request: Request) {
 
     console.log(`Fetching cast likes for hash: ${cleanHash}`);
 
-    // Fetch the cast reactions (likes)
-    const likesResponse = await fetch(`https://api.neynar.com/v2/farcaster/reactions/cast?hash=${encodeURIComponent(cleanHash)}&types=likes&limit=100`, {
-      headers: {
-        'x-api-key': NEYNAR_API_KEY,
-      },
-    });
+    const allUsers: NeynarUser[] = [];
+    const seenFids = new Set<number>();
+    let cursor: string | undefined = undefined;
+    let page = 0;
 
-    if (!likesResponse.ok) {
-      const errorText = await likesResponse.text();
-      console.error('Neynar API error:', errorText);
-      
-      if (likesResponse.status === 404) {
-        return NextResponse.json({ error: 'Cast not found. Please check the hash and try again.' }, { status: 404 });
+    while (true) {
+      const url = new URL('https://api.neynar.com/v2/farcaster/reactions/cast');
+      url.searchParams.set('hash', cleanHash);
+      url.searchParams.set('types', 'likes');
+      url.searchParams.set('limit', '100');
+      if (cursor) {
+        url.searchParams.set('cursor', cursor);
       }
-      
-      return NextResponse.json({ 
-        error: `Failed to fetch cast likes: ${likesResponse.status}`,
-        details: errorText
-      }, { status: likesResponse.status });
+
+      const likesResponse = await fetch(url.toString(), {
+        headers: {
+          'x-api-key': NEYNAR_API_KEY,
+        },
+      });
+
+      if (!likesResponse.ok) {
+        const errorText = await likesResponse.text();
+        console.error('Neynar API error:', errorText);
+
+        if (likesResponse.status === 404) {
+          return NextResponse.json({ error: 'Cast not found. Please check the hash and try again.' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+          error: `Failed to fetch cast likes: ${likesResponse.status}`,
+          details: errorText
+        }, { status: likesResponse.status });
+      }
+
+      const likesData: CastLikesResponse = await likesResponse.json();
+      const pageUsers = likesData.reactions?.map(reaction => reaction.user) || [];
+
+      const beforeCount = allUsers.length;
+      for (const user of pageUsers) {
+        if (!seenFids.has(user.fid)) {
+          seenFids.add(user.fid);
+          allUsers.push(user);
+        }
+      }
+
+      const nextCursor = likesData.next?.cursor;
+      const fetchedAll = !nextCursor || pageUsers.length === 0 || allUsers.length === beforeCount;
+
+      if (fetchedAll) {
+        break;
+      }
+
+      // Stop if Neynar returns the same cursor to avoid infinite loops
+      if (cursor && nextCursor === cursor) {
+        break;
+      }
+
+      cursor = nextCursor;
+      page += 1;
+
+      // Safety limit to avoid infinite loops
+      if (page > 50) {
+        console.warn('Stopping pagination after 50 pages');
+        break;
+      }
     }
 
-    const likesData: CastLikesResponse = await likesResponse.json();
-    const users = likesData.reactions?.map(reaction => reaction.user) || [];
-
     // Cache results for 30 seconds
-    await redisCache.set(cacheKey, users, 30);
-    
-    console.log(`Found ${users.length} users who liked the cast`);
-    
-    return NextResponse.json({ users });
+    await redisCache.set(cacheKey, allUsers, 30);
+
+    console.log(`Found ${allUsers.length} users who liked the cast`);
+
+    return NextResponse.json({ users: allUsers });
 
   } catch (error) {
     console.error('Error in cast likes fetch:', error);
