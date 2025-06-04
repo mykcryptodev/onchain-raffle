@@ -16,6 +16,7 @@ const LIST_CACHE_TTL = 30; // 30 seconds for the list
 const ACTIVE_RAFFLE_TTL = 60; // 60 seconds for active raffles
 const DEDUP_KEY = 'dedup:raffles:all';
 const DEDUP_TTL = 10; // 10 seconds for list deduplication
+const FAILED_RAFFLE_TTL = 3600; // 1 hour for failed raffles
 
 interface Raffle {
   raffleAddress: string;
@@ -81,10 +82,21 @@ export async function GET() {
       // Check Redis for each raffle individually
       const raffles: Raffle[] = [];
       const missingAddresses: string[] = [];
+      const skippedAddresses: string[] = [];
       
       // First pass: check what we have in Redis
       for (const address of reversedAddresses) {
         const cacheKey = `raffle:${address}`;
+        const failedKey = `failed:${address}`;
+        
+        // Check if this raffle is known to fail
+        const isFailed = await redisCache.get(failedKey);
+        if (isFailed) {
+          console.log(`Skipping known-failed raffle ${address}`);
+          skippedAddresses.push(address);
+          continue;
+        }
+        
         const cachedRaffle = await redisCache.get(cacheKey) as Raffle | null;
         
         if (cachedRaffle) {
@@ -95,7 +107,7 @@ export async function GET() {
         }
       }
       
-      console.log(`Found ${raffles.length} raffles in cache, need to fetch ${missingAddresses.length} from RPC`);
+      console.log(`Found ${raffles.length} raffles in cache, skipped ${skippedAddresses.length} known-failed, need to fetch ${missingAddresses.length} from RPC`);
       
       // Second pass: fetch missing raffles from RPC
       if (missingAddresses.length > 0) {
@@ -168,6 +180,20 @@ export async function GET() {
               return raffle;
             } catch (error) {
               console.error(`Failed to fetch raffle ${raffleAddress}:`, error);
+              
+              // Cache the failed raffle address to avoid repeated attempts
+              const failedKey = `failed:${raffleAddress}`;
+              const failureReason = error instanceof Error ? error.message : 'Unknown error';
+              
+              // Store failed raffle with reason and timestamp
+              await redisCache.set(failedKey, {
+                reason: failureReason,
+                timestamp: new Date().toISOString(),
+                errorType: error?.constructor?.name || 'Unknown'
+              }, FAILED_RAFFLE_TTL);
+              
+              console.log(`Cached failed raffle ${raffleAddress} for ${FAILED_RAFFLE_TTL} seconds`);
+              
               return null; // Return null for failed fetches
             }
           })
