@@ -31,13 +31,13 @@ function getTokenImageCacheKey(chainName: string, tokenAddress: string): string 
 
 // Function to try fetching image from token contract (e.g., Clanker tokens)
 async function tryFetchTokenImage(tokenAddress: string): Promise<{ imageBuffer: ArrayBuffer; contentType: string } | null> {
-  try {
-    const tokenContract = getContract({
-      chain,
-      address: tokenAddress,
-      client,
-    });
+  const tokenContract = getContract({
+    chain,
+    address: tokenAddress,
+    client,
+  });
 
+  try {
     const image = await readContract({
       contract: tokenContract,
       method: "function image() view returns (string)",
@@ -53,6 +53,9 @@ async function tryFetchTokenImage(tokenAddress: string): Promise<{ imageBuffer: 
         return { imageBuffer, contentType };
       }
     }
+  } catch (error) {
+    // If reading the contract fails, try next method
+    console.log('Failed to fetch image from token contract:', error);
 
     const imageSecondAttempt = await readContract({
       contract: tokenContract,
@@ -69,9 +72,6 @@ async function tryFetchTokenImage(tokenAddress: string): Promise<{ imageBuffer: 
         return { imageBuffer, contentType };
       }
     }
-  } catch (error) {
-    // If reading the contract fails, return null
-    console.log('Failed to fetch image from token contract:', error);
   }
   return null;
 }
