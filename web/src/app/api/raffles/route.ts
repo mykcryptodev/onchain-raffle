@@ -101,74 +101,86 @@ export async function GET() {
       if (missingAddresses.length > 0) {
         const fetchedRaffles = await Promise.all(
           missingAddresses.map(async (raffleAddress) => {
-            const raffleContract = getContract({
-              chain,
-              address: raffleAddress,
-              client,
-            });
+            try {
+              const raffleContract = getContract({
+                chain,
+                address: raffleAddress,
+                client,
+              });
 
-            // Get all raffle info in one call
-            const raffleInfo = await getRaffleInfo({ contract: raffleContract });
+              // Get all raffle info in one call
+              const raffleInfo = await getRaffleInfo({ contract: raffleContract });
 
-            // Destructure the response
-            const [
-              raffleOwner,
-              raffleToken,
-              raffleWinner,
-              isPrizeDistributed,
-              lastRequestId,
-              finalPrizeAmount
-            ] = raffleInfo;
+              // Destructure the response
+              const [
+                raffleOwner,
+                raffleToken,
+                raffleWinner,
+                isPrizeDistributed,
+                lastRequestId,
+                finalPrizeAmount
+              ] = raffleInfo;
 
-            // Get token info for complete data
-            const tokenContract = getContract({
-              chain,
-              address: raffleToken,
-              client,
-            });
+              // Get token info for complete data
+              const tokenContract = getContract({
+                chain,
+                address: raffleToken,
+                client,
+              });
 
-            const [tokenDecimals, raffleBalance] = await Promise.all([
-              decimals({ contract: tokenContract }),
-              balanceOf({ 
-                contract: tokenContract,
-                address: raffleAddress as `0x${string}`,
-              }),
-            ]);
+              const [tokenDecimals, raffleBalance] = await Promise.all([
+                decimals({ contract: tokenContract }),
+                balanceOf({ 
+                  contract: tokenContract,
+                  address: raffleAddress as `0x${string}`,
+                }),
+              ]);
 
-            const raffle: Raffle = {
-              raffleAddress,
-              raffleOwner,
-              raffleToken,
-              raffleWinner,
-              prizeDistributed: isPrizeDistributed,
-              lastRequestId: lastRequestId,
-              tokenDecimals,
-              balance: raffleBalance.toString(),
-              finalPrizeAmount: finalPrizeAmount.toString(),
-            };
+              const raffle: Raffle = {
+                raffleAddress,
+                raffleOwner,
+                raffleToken,
+                raffleWinner,
+                prizeDistributed: isPrizeDistributed,
+                lastRequestId: lastRequestId,
+                tokenDecimals,
+                balance: raffleBalance.toString(),
+                finalPrizeAmount: finalPrizeAmount.toString(),
+              };
 
-            // Cache individual raffle with bigint serialized
-            const cacheKey = `raffle:${raffleAddress}`;
-            const serializableRaffle = {
-              ...raffle,
-              lastRequestId: raffle.lastRequestId?.toString(),
-            };
+              // Cache individual raffle with bigint serialized
+              const cacheKey = `raffle:${raffleAddress}`;
+              const serializableRaffle = {
+                ...raffle,
+                lastRequestId: raffle.lastRequestId?.toString(),
+              };
 
-            if (isPrizeDistributed) {
-              // Completed raffle - store permanently
-              await redisCache.set(cacheKey, serializableRaffle);
-              console.log(`Cached completed raffle ${raffleAddress} permanently`);
-            } else {
-              // Active raffle - store with TTL
-              await redisCache.set(cacheKey, serializableRaffle, ACTIVE_RAFFLE_TTL);
-              console.log(`Cached active raffle ${raffleAddress} with ${ACTIVE_RAFFLE_TTL}s TTL`);
+              if (isPrizeDistributed) {
+                // Completed raffle - store permanently
+                await redisCache.set(cacheKey, serializableRaffle);
+                console.log(`Cached completed raffle ${raffleAddress} permanently`);
+              } else {
+                // Active raffle - store with TTL
+                await redisCache.set(cacheKey, serializableRaffle, ACTIVE_RAFFLE_TTL);
+                console.log(`Cached active raffle ${raffleAddress} with ${ACTIVE_RAFFLE_TTL}s TTL`);
+              }
+
+              return raffle;
+            } catch (error) {
+              console.error(`Failed to fetch raffle ${raffleAddress}:`, error);
+              return null; // Return null for failed fetches
             }
-
-            return raffle;
           })
         );
         
-        raffles.push(...fetchedRaffles);
+        // Filter out failed fetches (null values)
+        const successfulFetches = fetchedRaffles.filter((raffle): raffle is Raffle => raffle !== null);
+        
+        if (fetchedRaffles.length !== successfulFetches.length) {
+          console.warn(`Failed to fetch ${fetchedRaffles.length - successfulFetches.length} raffles out of ${fetchedRaffles.length}`);
+        }
+        
+        raffles.push(...successfulFetches);
       }
       
       // Sort raffles to maintain order (newest first)
