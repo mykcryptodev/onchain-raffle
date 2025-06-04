@@ -8,6 +8,7 @@ import { client } from "@/constants/thirdweb";
 import { toast } from "react-toastify";
 import { ImportSearchedFarcasterUsers } from "../ImportSearchedFarcasterUsers";
 import { ImportCastLikersModal } from "../ImportCastLikersModal";
+import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -25,6 +26,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [eligibleAddresses, setEligibleAddresses] = useState("");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isCastLikersModalOpen, setIsCastLikersModalOpen] = useState(false);
+  const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -96,6 +98,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           >
             Import Cast Likers
           </button>
+          <button
+            onClick={() => setIsSnapshotModalOpen(true)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Import Snapshot Voters
+          </button>
         </div>
 
         <textarea
@@ -148,6 +156,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       <ImportCastLikersModal
         isOpen={isCastLikersModalOpen}
         onClose={() => setIsCastLikersModalOpen(false)}
+        onImport={handleAddressesImported}
+      />
+
+      <ImportSnapshotVotersModal
+        isOpen={isSnapshotModalOpen}
+        onClose={() => setIsSnapshotModalOpen(false)}
         onImport={handleAddressesImported}
       />
     </>
