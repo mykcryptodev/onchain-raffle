@@ -3,5 +3,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: string;
     UPSTASH_URL?: string;
     UPSTASH_TOKEN?: string;
+    MORALIS_API_KEY?: string;
   }
-} 
+}
