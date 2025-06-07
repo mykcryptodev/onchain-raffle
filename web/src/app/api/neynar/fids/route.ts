@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     if (missingFids.length > 0) {
-      const url = new URL('https://api.neynar.com/v2/farcaster/user/bulk');
+      const url = new URL('https://api.neynar.com/v2/farcaster/user/bulk/');
       url.searchParams.set('fids', missingFids.join(','));
 
       const response = await fetch(url.toString(), {
