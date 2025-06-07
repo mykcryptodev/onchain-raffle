@@ -10,6 +10,7 @@ import { ImportSearchedFarcasterUsers } from "../ImportSearchedFarcasterUsers";
 import { ImportCastLikersModal } from "../ImportCastLikersModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 import { ImportFidsModal } from "../ImportFidsModal";
+import { FilterHoldersModal } from "../FilterHoldersModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -29,6 +30,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isCastLikersModalOpen, setIsCastLikersModalOpen] = useState(false);
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -120,6 +122,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           onChange={(e) => setEligibleAddresses(e.target.value)}
           className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 mb-3"
         />
+        <button
+          onClick={() => setIsFilterModalOpen(true)}
+          className="mb-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+        >
+          Filter by Holders
+        </button>
         <div className="flex justify-end">
           <TransactionButton
             transaction={() => requestWinnerTx}
@@ -178,6 +186,13 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
         onClose={() => setIsSnapshotModalOpen(false)}
         onImport={handleAddressesImported}
       />
+
+      <FilterHoldersModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        addresses={addresses}
+        onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
+      />
     </>
   );
-}; 
+};
