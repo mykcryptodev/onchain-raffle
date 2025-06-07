@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { ImportSearchedFarcasterUsers } from "../ImportSearchedFarcasterUsers";
 import { ImportCastLikersModal } from "../ImportCastLikersModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
+import { ImportFidsModal } from "../ImportFidsModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -27,6 +28,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isCastLikersModalOpen, setIsCastLikersModalOpen] = useState(false);
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
+  const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -93,6 +95,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
             Search Farcaster Users
           </button>
           <button
+            onClick={() => setIsFidsModalOpen(true)}
+            className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Import FIDs
+          </button>
+          <button
             onClick={() => setIsCastLikersModalOpen(true)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
@@ -150,6 +158,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       <ImportSearchedFarcasterUsers
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        onImport={handleAddressesImported}
+      />
+
+      <ImportFidsModal
+        isOpen={isFidsModalOpen}
+        onClose={() => setIsFidsModalOpen(false)}
         onImport={handleAddressesImported}
       />
 
