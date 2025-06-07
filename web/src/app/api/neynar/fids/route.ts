@@ -20,9 +20,9 @@ interface NeynarUser {
   };
 }
 
-interface UserResponse {
-  result?: { user: NeynarUser };
-  user?: NeynarUser;
+interface UsersResponse {
+  result?: { users: NeynarUser[] };
+  users?: NeynarUser[];
 }
 
 export async function POST(request: Request) {
@@ -46,34 +46,47 @@ export async function POST(request: Request) {
 
     const addresses: string[] = [];
 
+    const cachedUsers: { [fid: number]: NeynarUser } = {};
+    const missingFids: number[] = [];
+
     for (const fid of fidNumbers) {
       const cacheKey = `neynar:fid:${fid}`;
-      let user = await redisCache.get<NeynarUser>(cacheKey);
+      const cached = await redisCache.get<NeynarUser>(cacheKey);
+      if (cached) {
+        cachedUsers[fid] = cached;
+      } else {
+        missingFids.push(fid);
+      }
+    }
 
-      if (!user) {
-        const response = await fetch(`https://api.neynar.com/v2/farcaster/user?fid=${fid}`, {
-          headers: { 'x-api-key': NEYNAR_API_KEY },
-        });
+    if (missingFids.length > 0) {
+      const response = await fetch('https://api.neynar.com/v2/farcaster/user/bulk', {
+        method: 'POST',
+        headers: {
+          'x-api-key': NEYNAR_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fids: missingFids }),
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Neynar API error:', errorText);
-
-          if (response.status === 404) {
-            continue; // skip unknown fid
-          }
-
-          return NextResponse.json({ error: `Failed to fetch user for fid ${fid}` }, { status: response.status });
-        }
-
-        const data: UserResponse = await response.json();
-        user = data.result?.user || data.user;
-
-        if (user) {
-          await redisCache.set(cacheKey, user, 3600);
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Neynar API error:', errorText);
+        return NextResponse.json({ error: 'Failed to fetch users' }, { status: response.status });
       }
 
+      const data: UsersResponse = await response.json();
+      const users = data.result?.users || data.users || [];
+
+      for (const user of users) {
+        const cacheKey = `neynar:fid:${user.fid}`;
+        await redisCache.set(cacheKey, user, 3600);
+        cachedUsers[user.fid] = user;
+      }
+    }
+
+    for (const fid of fidNumbers) {
+      const user = cachedUsers[fid];
       if (user) {
         const ethAddress = user.verified_addresses?.primary?.eth_address || user.custody_address;
         if (ethAddress) {
