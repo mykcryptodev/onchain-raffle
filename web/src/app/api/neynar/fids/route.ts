@@ -60,13 +60,13 @@ export async function POST(request: Request) {
     }
 
     if (missingFids.length > 0) {
-      const response = await fetch('https://api.neynar.com/v2/farcaster/user/bulk', {
-        method: 'POST',
+      const url = new URL('https://api.neynar.com/v2/farcaster/user/bulk');
+      url.searchParams.set('fids', missingFids.join(','));
+
+      const response = await fetch(url.toString(), {
         headers: {
           'x-api-key': NEYNAR_API_KEY,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fids: missingFids }),
       });
 
       if (!response.ok) {
