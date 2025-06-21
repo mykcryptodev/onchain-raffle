@@ -8,6 +8,7 @@ import { client } from "@/constants/thirdweb";
 import { toast } from "react-toastify";
 import { ImportSearchedFarcasterUsers } from "../ImportSearchedFarcasterUsers";
 import { ImportCastLikersModal } from "../ImportCastLikersModal";
+import { ImportCastQuotesModal } from "../ImportCastQuotesModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 import { ImportFidsModal } from "../ImportFidsModal";
 import { FilterHoldersModal } from "../FilterHoldersModal";
@@ -28,6 +29,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [eligibleAddresses, setEligibleAddresses] = useState("");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isCastLikersModalOpen, setIsCastLikersModalOpen] = useState(false);
+  const [isCastQuotesModalOpen, setIsCastQuotesModalOpen] = useState(false);
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -109,6 +111,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
             Import Cast Likers
           </button>
           <button
+            onClick={() => setIsCastQuotesModalOpen(true)}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Import Quote Casters
+          </button>
+          <button
             onClick={() => setIsSnapshotModalOpen(true)}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
@@ -178,6 +186,12 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       <ImportCastLikersModal
         isOpen={isCastLikersModalOpen}
         onClose={() => setIsCastLikersModalOpen(false)}
+        onImport={handleAddressesImported}
+      />
+
+      <ImportCastQuotesModal
+        isOpen={isCastQuotesModalOpen}
+        onClose={() => setIsCastQuotesModalOpen(false)}
         onImport={handleAddressesImported}
       />
 
