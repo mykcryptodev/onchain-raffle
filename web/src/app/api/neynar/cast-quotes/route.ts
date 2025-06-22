@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     const cachedQuotes = await redisCache.get<NeynarUser[]>(cacheKey);
     if (cachedQuotes) {
       console.log(`Cache hit for cast quotes: ${cleanHash}`);
+      console.log('Returning cached users:', cachedQuotes);
       return NextResponse.json({ users: cachedQuotes });
     }
 
@@ -154,6 +155,7 @@ export async function POST(request: Request) {
     await redisCache.set(cacheKey, allUsers, 30);
 
     console.log(`Found ${allUsers.length} users who quoted the cast`);
+    console.log('Returning users:', allUsers);
 
     return NextResponse.json({ users: allUsers });
 
