@@ -67,7 +67,6 @@ export async function POST(request: Request) {
     const allUsers: NeynarUser[] = [];
     const seenFids = new Set<number>();
     let cursor: string | undefined = undefined;
-    let page = 0;
 
     while (true) {
       const url = new URL('https://api.neynar.com/v2/farcaster/cast/quotes');
@@ -138,13 +137,6 @@ export async function POST(request: Request) {
       }
 
       cursor = nextCursor;
-      page += 1;
-
-      // Safety limit to avoid infinite loops
-      if (page > 50) {
-        console.warn('Stopping pagination after 50 pages');
-        break;
-      }
     }
 
     // Cache results for 30 seconds
