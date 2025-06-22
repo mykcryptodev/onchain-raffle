@@ -27,11 +27,10 @@ interface NeynarUser {
 }
 
 interface CastQuotesResponse {
-  // Neynar's API may return quoting casts under the `quotes` key or directly as
-  // an array under `casts`. Both shapes also include a `next` cursor for
-  // pagination.
-  quotes?: { cast?: { author?: NeynarUser; hash?: string } }[];
-  casts?: { author?: NeynarUser; hash?: string }[];
+  casts?: {
+    author?: NeynarUser;
+    hash?: string;
+  }[];
   next?: {
     cursor: string;
   };
@@ -102,31 +101,18 @@ export async function POST(request: Request) {
         }, { status: quotesResponse.status });
       }
 
+      // The API returns quoting casts under the `casts` array
       const quotesData: CastQuotesResponse = await quotesResponse.json();
-
-      // Normalize the response across potential response shapes. Neynar may
-      // return quoting casts under `quotes` (each item containing a `cast`
-      // property) or directly under `casts`.
-      const quoteItems: any[] = [];
-      if (Array.isArray(quotesData.quotes)) {
-        for (const q of quotesData.quotes) {
-          if (q && typeof q === 'object') {
-            quoteItems.push((q as any).cast ?? q);
-          }
-        }
-      } else if (Array.isArray(quotesData.casts)) {
-        quoteItems.push(...quotesData.casts);
-      }
+      const quoteItems = Array.isArray(quotesData.casts) ? quotesData.casts : [];
 
       const pageUsers: NeynarUser[] = [];
 
-      for (const item of quoteItems) {
-        const cast: any = (item as any).cast ?? item;
+      for (const cast of quoteItems) {
         const author: NeynarUser | undefined = cast?.author;
 
         if (!author) continue;
 
-        // skip the original cast if it is included in the response
+        // Skip the original cast if it's somehow included in the response
         if (cast.hash && cast.hash === cleanHash) {
           continue;
         }
