@@ -27,10 +27,11 @@ interface NeynarUser {
 }
 
 interface CastQuotesResponse {
-  // newer Neynar APIs return quoting casts under `quotes`
-  quotes?: { cast: { author: NeynarUser } }[];
-  // fallback for older response shape
-  casts?: { author: NeynarUser }[];
+  // Neynar's API may return quoting casts under the `quotes` key or directly as
+  // an array under `casts`. Both shapes also include a `next` cursor for
+  // pagination.
+  quotes?: { cast?: { author?: NeynarUser; hash?: string } }[];
+  casts?: { author?: NeynarUser; hash?: string }[];
   next?: {
     cursor: string;
   };
@@ -103,8 +104,20 @@ export async function POST(request: Request) {
 
       const quotesData: CastQuotesResponse = await quotesResponse.json();
 
-      // Normalize the response across potential shapes
-      const quoteItems = (quotesData.quotes as any[] | undefined) ?? (quotesData.casts as any[] | undefined) ?? [];
+      // Normalize the response across potential response shapes. Neynar may
+      // return quoting casts under `quotes` (each item containing a `cast`
+      // property) or directly under `casts`.
+      const quoteItems: any[] = [];
+      if (Array.isArray(quotesData.quotes)) {
+        for (const q of quotesData.quotes) {
+          if (q && typeof q === 'object') {
+            quoteItems.push((q as any).cast ?? q);
+          }
+        }
+      } else if (Array.isArray(quotesData.casts)) {
+        quoteItems.push(...quotesData.casts);
+      }
+
       const pageUsers: NeynarUser[] = [];
 
       for (const item of quoteItems) {
