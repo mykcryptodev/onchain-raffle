@@ -73,7 +73,8 @@ export async function POST(request: Request) {
 
     while (true) {
       const url = new URL('https://api.neynar.com/v2/farcaster/cast/quotes');
-      url.searchParams.set('hash', cleanHash);
+      url.searchParams.set('identifier', cleanHash);
+      url.searchParams.set('type', 'hash');
       url.searchParams.set('limit', '100');
       if (cursor) {
         url.searchParams.set('cursor', cursor);
