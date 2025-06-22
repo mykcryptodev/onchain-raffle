@@ -102,12 +102,24 @@ export async function POST(request: Request) {
       }
 
       const quotesData: CastQuotesResponse = await quotesResponse.json();
-      // Quotes may be returned under `quotes` (new) or `casts` (old)
-      const quoteCasts = quotesData.quotes?.map(q => q.cast) || quotesData.casts || [];
-      const pageUsers = quoteCasts
-        .filter((cast: any) => cast.hash !== cleanHash)
-        .map((cast: any) => cast.author)
-        .filter(Boolean);
+
+      // Normalize the response across potential shapes
+      const quoteItems = (quotesData.quotes as any[] | undefined) ?? (quotesData.casts as any[] | undefined) ?? [];
+      const pageUsers: NeynarUser[] = [];
+
+      for (const item of quoteItems) {
+        const cast: any = (item as any).cast ?? item;
+        const author: NeynarUser | undefined = cast?.author;
+
+        if (!author) continue;
+
+        // skip the original cast if it is included in the response
+        if (cast.hash && cast.hash === cleanHash) {
+          continue;
+        }
+
+        pageUsers.push(author);
+      }
 
       const beforeCount = allUsers.length;
       for (const user of pageUsers) {
