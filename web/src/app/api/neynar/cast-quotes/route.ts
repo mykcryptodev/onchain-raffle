@@ -27,9 +27,10 @@ interface NeynarUser {
 }
 
 interface CastQuotesResponse {
-  casts: {
-    author: NeynarUser;
-  }[];
+  // newer Neynar APIs return quoting casts under `quotes`
+  quotes?: { cast: { author: NeynarUser } }[];
+  // fallback for older response shape
+  casts?: { author: NeynarUser }[];
   next?: {
     cursor: string;
   };
@@ -101,7 +102,12 @@ export async function POST(request: Request) {
       }
 
       const quotesData: CastQuotesResponse = await quotesResponse.json();
-      const pageUsers = quotesData.casts?.map(cast => cast.author) || [];
+      // Quotes may be returned under `quotes` (new) or `casts` (old)
+      const quoteCasts = quotesData.quotes?.map(q => q.cast) || quotesData.casts || [];
+      const pageUsers = quoteCasts
+        .filter((cast: any) => cast.hash !== cleanHash)
+        .map((cast: any) => cast.author)
+        .filter(Boolean);
 
       const beforeCount = allUsers.length;
       for (const user of pageUsers) {
