@@ -61,12 +61,8 @@ export async function POST(request: Request) {
     // Check cache first (cache for 30 seconds since quotes can change frequently)
     const cachedQuotes = await redisCache.get<NeynarUser[]>(cacheKey);
     if (cachedQuotes) {
-      console.log(`Cache hit for cast quotes: ${cleanHash}`);
-      console.log('Returning cached users:', cachedQuotes);
       return NextResponse.json({ users: cachedQuotes });
     }
-
-    console.log(`Fetching cast quotes for hash: ${cleanHash}`);
 
     const allUsers: NeynarUser[] = [];
     const seenFids = new Set<number>();
@@ -153,9 +149,6 @@ export async function POST(request: Request) {
 
     // Cache results for 30 seconds
     await redisCache.set(cacheKey, allUsers, 30);
-
-    console.log(`Found ${allUsers.length} users who quoted the cast`);
-    console.log('Returning users:', allUsers);
 
     return NextResponse.json({ users: allUsers });
 
