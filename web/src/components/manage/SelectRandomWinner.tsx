@@ -33,6 +33,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isNeynarFiltering, setIsNeynarFiltering] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -130,12 +131,41 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           onChange={(e) => setEligibleAddresses(e.target.value)}
           className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 mb-3"
         />
-        <button
-          onClick={() => setIsFilterModalOpen(true)}
-          className="mb-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-        >
-          Filter by Holders
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 mb-3">
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Filter by Holders
+          </button>
+          <button
+            onClick={async () => {
+              if (addresses.length === 0) return;
+              setIsNeynarFiltering(true);
+              try {
+                const response = await fetch("/api/neynar/score", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ addresses, minScore: 0.9 }),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                  throw new Error(data.error || "Failed to filter addresses");
+                }
+                setEligibleAddresses(data.addresses.join("\n"));
+              } catch (err) {
+                console.error("Error filtering by Neynar score:", err);
+                toast.error("Failed to filter by Neynar score");
+              } finally {
+                setIsNeynarFiltering(false);
+              }
+            }}
+            disabled={isNeynarFiltering}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-600 disabled:opacity-50 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            {isNeynarFiltering ? "Filtering..." : "Require .9 Neynar score or higher"}
+          </button>
+        </div>
         <div className="flex justify-end">
           <TransactionButton
             transaction={() => requestWinnerTx}
