@@ -126,12 +126,17 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           </button>
         </div>
 
-        <textarea
-          placeholder="0x1234...&#10;0x5678...&#10;0xabcd..."
-          value={eligibleAddresses}
-          onChange={(e) => setEligibleAddresses(e.target.value)}
-          className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 mb-3"
-        />
+        <div className="relative mb-3">
+          <textarea
+            placeholder="0x1234...&#10;0x5678...&#10;0xabcd..."
+            value={eligibleAddresses}
+            onChange={(e) => setEligibleAddresses(e.target.value)}
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 pr-20"
+          />
+          <div className="absolute bottom-2 right-2 text-xs text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded">
+            {addresses.length} address{addresses.length !== 1 ? 'es' : ''}
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2 mb-3">
           <button
             onClick={() => setIsFilterModalOpen(true)}
