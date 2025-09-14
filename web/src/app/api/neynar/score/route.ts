@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     }
 
     if (missing.length > 0) {
-      const url = new URL('https://api.neynar.com/v2/farcaster/user/bulk/');
+      const url = new URL('https://api.neynar.com/v2/farcaster/user/bulk-by-address');
       url.searchParams.set('addresses', missing.join(','));
 
       const response = await fetch(url.toString(), {
