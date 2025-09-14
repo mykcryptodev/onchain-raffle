@@ -22,6 +22,7 @@ interface NeynarUser {
 interface UsersResponse {
   result?: { users: NeynarUser[] };
   users?: NeynarUser[];
+  [key: string]: any; // Allow for the new format where keys are addresses
 }
 
 export async function POST(request: Request) {
@@ -81,8 +82,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: response.status });
       }
 
-      const data: UsersResponse = await response.json();
-      const users = data.result?.users || data.users || [];
+      const data: any = await response.json();
+      
+      // Handle the new API response format where data is { "address": [user] }
+      let users: NeynarUser[] = [];
+      if (data.result?.users) {
+        users = data.result.users;
+      } else if (data.users) {
+        users = data.users;
+      } else if (typeof data === 'object' && !Array.isArray(data)) {
+        // New format: { "address": [user] }
+        users = Object.values(data).flat() as NeynarUser[];
+      }
 
       const fids: number[] = [];
       const addressToUser: Record<string, NeynarUser> = {};
@@ -104,25 +115,52 @@ export async function POST(request: Request) {
       }
 
       if (fids.length > 0) {
-        const scoreUrl = new URL('https://api.neynar.com/v2/farcaster/user/bulk');
-        scoreUrl.searchParams.set('fids', fids.join(','));
-
-        const scoreResp = await fetch(scoreUrl.toString(), {
-          headers: {
-            'x-api-key': NEYNAR_API_KEY,
-          },
-        });
-
-        if (!scoreResp.ok) {
-          const errorText = await scoreResp.text();
-          console.error('Neynar score API error:', errorText);
-          return NextResponse.json({ error: 'Failed to fetch scores' }, { status: scoreResp.status });
+        // Batch FIDs into chunks of 100 (Neynar API limit)
+        const BATCH_SIZE = 100;
+        const fidBatches: number[][] = [];
+        for (let i = 0; i < fids.length; i += BATCH_SIZE) {
+          fidBatches.push(fids.slice(i, i + BATCH_SIZE));
         }
+        
+        const allScoreUsers: NeynarUser[] = [];
+        
+        // Process each batch
+        for (let batchIndex = 0; batchIndex < fidBatches.length; batchIndex++) {
+          const batch = fidBatches[batchIndex];
+          
+          const scoreUrl = new URL('https://api.neynar.com/v2/farcaster/user/bulk');
+          scoreUrl.searchParams.set('fids', batch.join(','));
 
-        const scoreData: UsersResponse = await scoreResp.json();
-        const scoreUsers = scoreData.result?.users || scoreData.users || [];
+          const scoreResp = await fetch(scoreUrl.toString(), {
+            headers: {
+              'x-api-key': NEYNAR_API_KEY,
+            },
+          });
+
+          if (!scoreResp.ok) {
+            const errorText = await scoreResp.text();
+            console.error('Neynar score API error:', errorText);
+            return NextResponse.json({ error: 'Failed to fetch scores' }, { status: scoreResp.status });
+          }
+
+          const scoreData: any = await scoreResp.json();
+          
+          // Handle the new API response format where data is { "address": [user] }
+          let scoreUsers: NeynarUser[] = [];
+          if (scoreData.result?.users) {
+            scoreUsers = scoreData.result.users;
+          } else if (scoreData.users) {
+            scoreUsers = scoreData.users;
+          } else if (typeof scoreData === 'object' && !Array.isArray(scoreData)) {
+            // New format: { "address": [user] }
+            scoreUsers = Object.values(scoreData).flat() as NeynarUser[];
+          }
+          
+          allScoreUsers.push(...scoreUsers);
+        }
+        
         const scoreMap: Record<number, number> = {};
-        for (const u of scoreUsers) {
+        for (const u of allScoreUsers) {
           if (typeof u.fid === 'number') {
             const score =
               typeof u.score === 'number'
@@ -151,3 +189,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to filter addresses' }, { status: 500 });
   }
 }
+
