@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { redisCache } from '@/lib/redis';
+import { NeynarUser } from '@/types/neynar';
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
 
@@ -7,22 +8,8 @@ if (!NEYNAR_API_KEY) {
   console.error('NEYNAR_API_KEY is not set');
 }
 
-interface NeynarUser {
-  fid: number;
-  custody_address: string;
-  score?: number;
-  verified_addresses?: {
-    eth_addresses?: string[];
-    primary?: {
-      eth_address?: string;
-    };
-  };
-}
-
-interface UsersResponse {
-  result?: { users: NeynarUser[] };
-  users?: NeynarUser[];
-  [key: string]: any; // Allow for the new format where keys are addresses
+interface NeynarApiResponse {
+  [address: string]: NeynarUser[];
 }
 
 export async function POST(request: Request) {
@@ -82,18 +69,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: response.status });
       }
 
-      const data: any = await response.json();
+      const data: NeynarApiResponse = await response.json();
       
-      // Handle the new API response format where data is { "address": [user] }
-      let users: NeynarUser[] = [];
-      if (data.result?.users) {
-        users = data.result.users;
-      } else if (data.users) {
-        users = data.users;
-      } else if (typeof data === 'object' && !Array.isArray(data)) {
-        // New format: { "address": [user] }
-        users = Object.values(data).flat() as NeynarUser[];
-      }
+      // Extract users from the response format { "address": [user] }
+      const users: NeynarUser[] = Object.values(data).flat();
 
       const fids: number[] = [];
       const addressToUser: Record<string, NeynarUser> = {};
@@ -143,18 +122,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to fetch scores' }, { status: scoreResp.status });
           }
 
-          const scoreData: any = await scoreResp.json();
+          const scoreData: NeynarApiResponse = await scoreResp.json();
           
-          // Handle the new API response format where data is { "address": [user] }
-          let scoreUsers: NeynarUser[] = [];
-          if (scoreData.result?.users) {
-            scoreUsers = scoreData.result.users;
-          } else if (scoreData.users) {
-            scoreUsers = scoreData.users;
-          } else if (typeof scoreData === 'object' && !Array.isArray(scoreData)) {
-            // New format: { "address": [user] }
-            scoreUsers = Object.values(scoreData).flat() as NeynarUser[];
-          }
+          // Extract users from the response format { "address": [user] }
+          const scoreUsers: NeynarUser[] = Object.values(scoreData).flat();
           
           allScoreUsers.push(...scoreUsers);
         }
