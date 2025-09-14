@@ -12,6 +12,7 @@ import { ImportCastQuotesModal } from "../ImportCastQuotesModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 import { ImportFidsModal } from "../ImportFidsModal";
 import { FilterHoldersModal } from "../FilterHoldersModal";
+import { FilterHumansModal } from "../FilterHumansModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -33,6 +34,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isHumansFilterModalOpen, setIsHumansFilterModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -124,18 +126,31 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
           </button>
         </div>
 
-        <textarea
-          placeholder="0x1234...&#10;0x5678...&#10;0xabcd..."
-          value={eligibleAddresses}
-          onChange={(e) => setEligibleAddresses(e.target.value)}
-          className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 mb-3"
-        />
-        <button
-          onClick={() => setIsFilterModalOpen(true)}
-          className="mb-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-        >
-          Filter by Holders
-        </button>
+        <div className="relative mb-3">
+          <textarea
+            placeholder="0x1234...&#10;0x5678...&#10;0xabcd..."
+            value={eligibleAddresses}
+            onChange={(e) => setEligibleAddresses(e.target.value)}
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 h-32 pr-20"
+          />
+          <div className="absolute bottom-2 right-2 text-xs text-zinc-500 bg-zinc-900/80 px-2 py-1 rounded">
+            {addresses.length} address{addresses.length !== 1 ? 'es' : ''}
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 mb-3">
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Filter by Holders
+          </button>
+          <button
+            onClick={() => setIsHumansFilterModalOpen(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Filter by Humans
+          </button>
+        </div>
         <div className="flex justify-end">
           <TransactionButton
             transaction={() => requestWinnerTx}
@@ -204,6 +219,13 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       <FilterHoldersModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
+        addresses={addresses}
+        onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
+      />
+
+      <FilterHumansModal
+        isOpen={isHumansFilterModalOpen}
+        onClose={() => setIsHumansFilterModalOpen(false)}
         addresses={addresses}
         onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
       />
