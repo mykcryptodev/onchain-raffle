@@ -12,6 +12,7 @@ import { ImportCastQuotesModal } from "../ImportCastQuotesModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 import { ImportFidsModal } from "../ImportFidsModal";
 import { FilterHoldersModal } from "../FilterHoldersModal";
+import { FilterNeynarScoreModal } from "../FilterNeynarScoreModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -33,7 +34,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isNeynarFiltering, setIsNeynarFiltering] = useState(false);
+  const [isNeynarFilterModalOpen, setIsNeynarFilterModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -139,31 +140,10 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
             Filter by Holders
           </button>
           <button
-            onClick={async () => {
-              if (addresses.length === 0) return;
-              setIsNeynarFiltering(true);
-              try {
-                const response = await fetch("/api/neynar/score", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ addresses, minScore: 0.9 }),
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                  throw new Error(data.error || "Failed to filter addresses");
-                }
-                setEligibleAddresses(data.addresses.join("\n"));
-              } catch (err) {
-                console.error("Error filtering by Neynar score:", err);
-                toast.error("Failed to filter by Neynar score");
-              } finally {
-                setIsNeynarFiltering(false);
-              }
-            }}
-            disabled={isNeynarFiltering}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-600 disabled:opacity-50 text-white rounded-lg transition-colors text-sm font-medium"
+            onClick={() => setIsNeynarFilterModalOpen(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
-            {isNeynarFiltering ? "Filtering..." : "Require .9 Neynar score or higher"}
+            Filter by Neynar Score
           </button>
         </div>
         <div className="flex justify-end">
@@ -234,6 +214,13 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
       <FilterHoldersModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
+        addresses={addresses}
+        onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
+      />
+
+      <FilterNeynarScoreModal
+        isOpen={isNeynarFilterModalOpen}
+        onClose={() => setIsNeynarFilterModalOpen(false)}
         addresses={addresses}
         onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
       />
