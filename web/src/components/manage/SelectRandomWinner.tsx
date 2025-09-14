@@ -12,7 +12,7 @@ import { ImportCastQuotesModal } from "../ImportCastQuotesModal";
 import { ImportSnapshotVotersModal } from "../ImportSnapshotVotersModal";
 import { ImportFidsModal } from "../ImportFidsModal";
 import { FilterHoldersModal } from "../FilterHoldersModal";
-import { FilterNeynarScoreModal } from "../FilterNeynarScoreModal";
+import { FilterHumansModal } from "../FilterHumansModal";
 
 const BUFFER_PERCENTAGE = 300n; // 3x buffer
 
@@ -34,7 +34,7 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isFidsModalOpen, setIsFidsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isNeynarFilterModalOpen, setIsNeynarFilterModalOpen] = useState(false);
+  const [isHumansFilterModalOpen, setIsHumansFilterModalOpen] = useState(false);
 
   const addresses = useMemo(() => {
     return eligibleAddresses
@@ -140,10 +140,10 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
             Filter by Holders
           </button>
           <button
-            onClick={() => setIsNeynarFilterModalOpen(true)}
+            onClick={() => setIsHumansFilterModalOpen(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
-            Filter by Neynar Score
+            Filter by Humans
           </button>
         </div>
         <div className="flex justify-end">
@@ -218,9 +218,9 @@ export const SelectRandomWinner: FC<SelectRandomWinnerProps> = ({
         onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
       />
 
-      <FilterNeynarScoreModal
-        isOpen={isNeynarFilterModalOpen}
-        onClose={() => setIsNeynarFilterModalOpen(false)}
+      <FilterHumansModal
+        isOpen={isHumansFilterModalOpen}
+        onClose={() => setIsHumansFilterModalOpen(false)}
         addresses={addresses}
         onFilter={(filtered) => setEligibleAddresses(filtered.join("\n"))}
       />
